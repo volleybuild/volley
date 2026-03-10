@@ -1,0 +1,29 @@
+appId: com.volley.terminal
+productName: Volley
+directories:
+  output: release
+
+mac:
+  category: public.app-category.developer-tools
+  icon: resources/icon.icns
+  target:
+    - dmg
+    - zip
+
+linux:
+  target:
+    - AppImage
+    - deb
+
+win:
+  target:
+    - nsis
+
+publish:
+  provider: github
+
+files:
+  - dist/**/*
+  - resources/**/*
+  - node_modules/**/*
+  - "!node_modules/.cache"

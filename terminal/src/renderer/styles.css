@@ -1,0 +1,292 @@
+@import "diff2html/bundles/css/diff2html.min.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  }
+  kbd {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid #2a3140;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+    font-size: 11px;
+    color: #8b919e;
+    line-height: 18px;
+  }
+}
+
+/* macOS title bar drag region — Electron-specific, no Tailwind equivalent */
+.titlebar-drag {
+  -webkit-app-region: drag;
+}
+.titlebar-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Scrollbar — pseudo-elements, no Tailwind equivalent */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a3140;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #34d399;
+}
+
+/* Terminal padding — descendant selector into xterm internals */
+.terminal-container .xterm {
+  padding: 4px 8px;
+}
+
+/* ── Status dot animations ─────────────────────────────────────── */
+.animate-status-pending {
+  animation: pulse-pending 1.2s ease-in-out infinite;
+}
+@keyframes pulse-pending {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(110, 231, 183, 0.4); }
+  50% { opacity: 0.6; box-shadow: 0 0 6px 2px rgba(110, 231, 183, 0.3); }
+}
+
+.animate-status-running {
+  animation: pulse-running 2s ease-in-out infinite;
+}
+@keyframes pulse-running {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(110, 231, 183, 0.5); }
+  50% { box-shadow: 0 0 4px 2px rgba(110, 231, 183, 0.3); }
+}
+
+.animate-status-idle {
+  animation: pulse-idle 3s ease-in-out infinite;
+}
+@keyframes pulse-idle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-status-exited {
+  animation: flash-exit 0.6s ease-out;
+}
+@keyframes flash-exit {
+  0% { box-shadow: 0 0 8px 4px rgba(239, 68, 68, 0.6); }
+  100% { box-shadow: none; }
+}
+
+/* Agent thinking — faster pulse for active thought */
+.animate-status-thinking {
+  animation: pulse-thinking 1s ease-in-out infinite;
+}
+@keyframes pulse-thinking {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+/* Agent waiting — amber pulse to indicate waiting for user input */
+.animate-status-waiting {
+  animation: pulse-waiting 1.5s ease-in-out infinite;
+}
+@keyframes pulse-waiting {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px 1px rgba(251, 191, 36, 0.4); }
+  50% { opacity: 0.7; box-shadow: 0 0 8px 3px rgba(251, 191, 36, 0.2); }
+}
+
+/* ── Grid mode specific ────────────────────────────────────────── */
+
+/* Grid tool call running indicator */
+.grid-tool-running {
+  animation: grid-tool-spin 1.5s linear infinite;
+}
+@keyframes grid-tool-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Line clamp utility for grid messages */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── File viewer — CSS counters, no Tailwind equivalent ────────── */
+.file-viewer-pre {
+  margin: 0;
+  padding: 0 12px 12px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  counter-reset: line;
+  background: #09090b;
+}
+
+.file-viewer-pre code {
+  background: transparent;
+  display: block;
+}
+
+.file-viewer-pre code .line {
+  display: block;
+  counter-increment: line;
+}
+
+.file-viewer-pre code .line::before {
+  content: counter(line);
+  display: inline-block;
+  width: 3.5em;
+  padding-right: 1em;
+  text-align: right;
+  color: #505664;
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Override hljs background to match app */
+.hljs {
+  background: #09090b !important;
+}
+
+/* ── Diff viewer (diff2html dark theme overrides) ─────────────── */
+.diff-viewer .d2h-wrapper {
+  background: transparent;
+}
+.diff-viewer .d2h-file-wrapper {
+  border: none;
+  background: transparent;
+  margin: 0;
+}
+.diff-viewer .d2h-file-header {
+  display: none;
+}
+.diff-viewer .d2h-file-diff {
+  overflow-x: auto;
+}
+.diff-viewer .d2h-code-wrapper {
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.diff-viewer .d2h-diff-table {
+  border-collapse: collapse;
+}
+.diff-viewer .d2h-diff-tbody tr {
+  background: transparent;
+}
+.diff-viewer .d2h-code-linenumber {
+  position: static !important;
+  background: transparent;
+  color: #52525b;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0 8px;
+  text-align: right;
+  user-select: none;
+  vertical-align: top;
+}
+.diff-viewer .d2h-code-line,
+.diff-viewer .d2h-code-side-line {
+  position: static !important;
+  background: transparent;
+  color: #a1a1aa;
+  padding: 0 0 0 12px;
+}
+.diff-viewer .d2h-code-line-prefix {
+  position: static !important;
+  color: #71717a;
+  user-select: none;
+}
+.diff-viewer .d2h-code-line-ctn {
+  position: static !important;
+  white-space: pre;
+}
+/* Insertions */
+.diff-viewer .d2h-ins {
+  background: rgba(110, 231, 183, 0.06);
+}
+.diff-viewer .d2h-ins .d2h-code-line-prefix,
+.diff-viewer .d2h-ins .d2h-code-line-ctn {
+  color: #6ee7b7;
+}
+/* Deletions */
+.diff-viewer .d2h-del {
+  background: rgba(248, 113, 113, 0.06);
+}
+.diff-viewer .d2h-del .d2h-code-line-prefix,
+.diff-viewer .d2h-del .d2h-code-line-ctn {
+  color: #f87171;
+}
+/* Info/hunk headers */
+.diff-viewer .d2h-info {
+  background: rgba(96, 165, 250, 0.05);
+  color: #60a5fa;
+  border: none;
+  padding: 4px 12px;
+}
+.diff-viewer .d2h-emptyplaceholder {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* ── Toast animation ───────────────────────────────────────────── */
+.animate-toast-in {
+  animation: toast-in 0.2s ease-out;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── Modal animations ──────────────────────────────────────────── */
+.animate-modal-in {
+  animation: modal-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-modal-backdrop {
+  animation: backdrop-in 0.15s ease-out;
+}
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modal file list stagger animation */
+.animate-file-row {
+  animation: file-row-in 0.2s ease-out both;
+}
+@keyframes file-row-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Subtle glow pulse for modal accents */
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}

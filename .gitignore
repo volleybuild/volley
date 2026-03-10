@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.volley/
+.claude/settings.local.json
+terminal/dist/
+terminal/node_modules/
+terminal/release/
+website/node_modules/
+website/.next/
+website/out/
+
+# Private / development
+docs/
+CLAUDE.md
+.claude/

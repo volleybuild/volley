@@ -1,0 +1,26 @@
+import type { ITheme } from "@xterm/xterm";
+
+export const volleyTheme: ITheme = {
+  background: "#08080c",
+  foreground: "#e8eaf0",
+  cursor: "#6ee7b7",
+  cursorAccent: "#08080c",
+  selectionBackground: "#064e3b",
+  selectionForeground: "#e8eaf0",
+  black: "#08080c",
+  red: "#f87171",
+  green: "#6ee7b7",
+  yellow: "#fbbf24",
+  blue: "#60a5fa",
+  magenta: "#c084fc",
+  cyan: "#22d3ee",
+  white: "#e8eaf0",
+  brightBlack: "#505664",
+  brightRed: "#fca5a5",
+  brightGreen: "#a7f3d0",
+  brightYellow: "#fde68a",
+  brightBlue: "#93c5fd",
+  brightMagenta: "#d8b4fe",
+  brightCyan: "#67e8f9",
+  brightWhite: "#ffffff",
+};

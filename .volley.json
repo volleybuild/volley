@@ -1,0 +1,10 @@
+{
+  "terminal": "volley",
+  "grid": {
+    "maxColumns": 4,
+    "maxRows": 3,
+    "gap": 0
+  },
+  "setup": ["npm install", "cd terminal && npm install"],
+  "start": "cd terminal && npm run dev"
+}
