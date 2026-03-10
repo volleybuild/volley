@@ -13,6 +13,12 @@ Download the latest `.dmg` from the [Releases page](https://github.com/volleybui
 
 macOS only for now. Windows and Linux coming soon.
 
+> [!NOTE]
+> The app is not code-signed yet. If macOS says it's "damaged", run:
+> ```bash
+> xattr -cr /Applications/Volley.app
+> ```
+
 ## Some notes
 
 We are very early in this project. Expect bugs.
