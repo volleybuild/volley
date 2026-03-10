@@ -1,0 +1,42 @@
+{
+  "name": "volley-terminal",
+  "version": "0.1.0",
+  "description": "Electron terminal host for volley sessions",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "build": "tsc && vite build",
+    "dev": "npm run build && electronmon .",
+    "dev:watch": "npm run build && (tsc --watch --preserveWatchOutput & vite build --watch & electronmon . & wait)",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "postinstall": "electron-rebuild"
+  },
+  "dependencies": {
+    "@fontsource/outfit": "^5.2.8",
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/addon-webgl": "^0.18.0",
+    "@xterm/xterm": "^5.5.0",
+    "diff2html": "^3.4.56",
+    "highlight.js": "^11.11.1",
+    "node-pty": "^1.0.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "zustand": "^5.0.11",
+    "@anthropic-ai/claude-agent-sdk": "^0.1.0"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.7.0",
+    "@types/node": "^25.3.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.4",
+    "autoprefixer": "^10.4.27",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "electronmon": "^2.0.0",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  }
+}

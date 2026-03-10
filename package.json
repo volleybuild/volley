@@ -1,0 +1,26 @@
+{
+  "name": "volley",
+  "version": "0.1.0",
+  "description": "Run multiple Claude Code agents in parallel using git worktrees",
+  "type": "module",
+  "bin": {
+    "volley": "./dist/cli.js",
+    "vo": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts"
+  },
+  "keywords": [
+    "claude-code",
+    "git",
+    "worktree",
+    "parallel",
+    "agents"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^25.3.3",
+    "typescript": "^5.9.3"
+  }
+}
