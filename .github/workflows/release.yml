@@ -18,10 +18,16 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
+      - name: Build CLI
+        run: npm ci && npm run build
+
+      - name: Bundle CLI into terminal resources
+        run: cp -R dist terminal/resources/cli
+
+      - name: Install terminal dependencies
         run: cd terminal && npm ci
 
-      - name: Build
+      - name: Build terminal
         run: cd terminal && npm run build
 
       - name: Package & publish
