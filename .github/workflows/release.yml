@@ -22,7 +22,9 @@ jobs:
         run: npm ci && npm run build
 
       - name: Bundle CLI into terminal resources
-        run: cp -R dist terminal/resources/cli
+        run: |
+          cp -R dist terminal/resources/cli
+          echo '{"type":"module"}' > terminal/resources/cli/package.json
 
       - name: Install terminal dependencies
         run: cd terminal && npm ci
