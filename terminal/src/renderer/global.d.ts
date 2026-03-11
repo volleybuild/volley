@@ -51,7 +51,7 @@ interface VolleyApi {
     repoRoot(basePath?: string): Promise<string>;
   };
   session: {
-    start(task: string): void;
+    start(task: string, baseBranch?: string): void;
     onOpened(callback: (session: VolleySession & { pendingId?: string }) => void): void;
     onClosed(callback: (payload: { sessionId: string }) => void): void;
     onPending(callback: (payload: { pendingId: string; task: string }) => void): void;
@@ -60,7 +60,7 @@ interface VolleyApi {
     remove(sessionId: string): Promise<{ ok: boolean; error?: string }>;
     createTodo(task: string): Promise<{ ok: boolean; id?: string; error?: string }>;
     updateTodo(sessionId: string, task: string): Promise<{ ok: boolean; error?: string }>;
-    startTodo(sessionId: string): void;
+    startTodo(sessionId: string, baseBranch?: string): void;
     complete(sessionId: string, mergedTo?: string): Promise<{ ok: boolean; error?: string }>;
     delete(sessionId: string): Promise<{ ok: boolean; error?: string }>;
   };
@@ -85,6 +85,7 @@ interface VolleyApi {
     createPr(sessionId: string, title: string, body: string, base: string): Promise<{ ok: boolean; url?: string; prUrl?: string; error?: string }>;
     mergeSource(sessionId: string): Promise<{ ok: boolean; output?: string; error?: string; conflicts?: string[] }>;
     land(sessionId: string): Promise<{ ok: boolean; baseBranch?: string; error?: string }>;
+    listBranches(): Promise<{ branches: { name: string; remote: boolean }[]; current: string }>;
   };
   run: {
     start(sessionId: string): Promise<{ ok: boolean; error?: string }>;

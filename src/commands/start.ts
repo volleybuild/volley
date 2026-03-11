@@ -5,10 +5,18 @@ import { ensureGitRepo } from "../utils/git.js";
 import { startSession, startTodoSession, listSessions } from "../session.js";
 
 export async function cmdStart(args: string[]): Promise<void> {
+  // Extract --base <branch> flag before joining remaining args as task
+  let baseBranch: string | undefined;
+  const baseIdx = args.indexOf("--base");
+  if (baseIdx !== -1) {
+    baseBranch = args[baseIdx + 1];
+    args.splice(baseIdx, 2);
+  }
+
   const taskOrId = args.join(" ");
   if (!taskOrId) {
     console.error(`${glyph.error} Provide a task description or todo session ID.`);
-    console.log(`  ${c.dim}volley start "add dark mode toggle"${c.reset}`);
+    console.log(`  ${c.dim}volley start "add dark mode toggle" [--base <branch>]${c.reset}`);
     process.exit(1);
   }
 
@@ -32,7 +40,9 @@ export async function cmdStart(args: string[]): Promise<void> {
 
   try {
     // If it's a todo session, start it; otherwise create a new session
-    const session = todoSession ? startTodoSession(taskOrId) : startSession(taskOrId);
+    const session = todoSession
+      ? startTodoSession(taskOrId, "vo", baseBranch)
+      : startSession(taskOrId, "vo", baseBranch);
     loading.stop();
     console.log(`${glyph.filled} Session deployed\n`);
     console.log(`  ${c.bold}ID${c.reset}       ${session.id}`);

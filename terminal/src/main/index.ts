@@ -505,7 +505,7 @@ app.whenReady().then(() => {
   // ── Session handlers ────────────────────────────────────────────────────
 
   // Handle new session requests from renderer
-  ipcMain.on("session:start", (_event, { task }: { task: string }) => {
+  ipcMain.on("session:start", (_event, { task, baseBranch }: { task: string; baseBranch?: string }) => {
     if (!repoRoot) return;
 
     const pendingId = "pending-" + Date.now();
@@ -514,7 +514,9 @@ app.whenReady().then(() => {
     // Notify renderer immediately so a pending tab appears
     mainWindow?.webContents.send("session:pending", { pendingId, task });
 
-    const child = spawnCli(["start", task], repoRoot);
+    const args = ["start", task];
+    if (baseBranch) args.push("--base", baseBranch);
+    const child = spawnCli(args, repoRoot);
 
     child.stdout?.on("data", (chunk: Buffer) => {
       mainWindow?.webContents.send("session:setup-output", { pendingId, data: chunk.toString() });
@@ -634,7 +636,7 @@ app.whenReady().then(() => {
   });
 
   // Start a todo session (creates worktree/branch)
-  ipcMain.on("session:start-todo", (_event, { sessionId }: { sessionId: string }) => {
+  ipcMain.on("session:start-todo", (_event, { sessionId, baseBranch }: { sessionId: string; baseBranch?: string }) => {
     if (!repoRoot) return;
 
     const pendingId = "pending-" + Date.now();
@@ -643,7 +645,9 @@ app.whenReady().then(() => {
     // Notify renderer that setup is in progress
     mainWindow?.webContents.send("session:pending", { pendingId, task: sessionId });
 
-    const child = spawnCli(["start", sessionId], repoRoot);
+    const args = ["start", sessionId];
+    if (baseBranch) args.push("--base", baseBranch);
+    const child = spawnCli(args, repoRoot);
 
     child.stdout?.on("data", (chunk: Buffer) => {
       mainWindow?.webContents.send("session:setup-output", { pendingId, data: chunk.toString() });

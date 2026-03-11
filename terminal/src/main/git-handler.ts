@@ -671,6 +671,58 @@ export function registerGitHandlers(getRepoRoot: () => string | null, getProvide
     return { ok: false, prUrl: prUrl ?? undefined, error: "No CLI available — use browser" };
   });
 
+  // ── git:list-branches ────────────────────────────────────────────────
+
+  ipcMain.handle("git:list-branches", () => {
+    const repoRoot = getRepoRoot();
+    if (!repoRoot) return { branches: [], current: "" };
+
+    let current = "";
+    try {
+      current = execFileSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
+        cwd: repoRoot, encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"],
+      }).trim();
+    } catch { /* ignore */ }
+
+    const branches: { name: string; remote: boolean }[] = [];
+    const localNames = new Set<string>();
+
+    // Local branches
+    try {
+      const out = execFileSync("git", ["branch", "--format=%(refname:short)"], {
+        cwd: repoRoot, encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"],
+      }).trim();
+      if (out) {
+        for (const name of out.split("\n")) {
+          const trimmed = name.trim();
+          if (trimmed) {
+            localNames.add(trimmed);
+            branches.push({ name: trimmed, remote: false });
+          }
+        }
+      }
+    } catch { /* ignore */ }
+
+    // Remote branches (deduplicate against locals)
+    try {
+      const out = execFileSync("git", ["branch", "-r", "--format=%(refname:short)"], {
+        cwd: repoRoot, encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"],
+      }).trim();
+      if (out) {
+        for (const name of out.split("\n")) {
+          const trimmed = name.trim();
+          if (!trimmed || trimmed.includes("/HEAD")) continue;
+          // Strip origin/ prefix for dedup check
+          const shortName = trimmed.replace(/^origin\//, "");
+          if (localNames.has(shortName)) continue;
+          branches.push({ name: trimmed, remote: true });
+        }
+      }
+    } catch { /* ignore */ }
+
+    return { branches, current };
+  });
+
   // ── git:merge-source ──────────────────────────────────────────────────
 
   ipcMain.handle("git:merge-source", (_event, { sessionId }: { sessionId: string }) => {

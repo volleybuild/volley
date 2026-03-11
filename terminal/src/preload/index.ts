@@ -41,8 +41,8 @@ contextBridge.exposeInMainWorld("volley", {
     ipcRenderer.send("renderer:ready");
   },
   session: {
-    start(task: string): void {
-      ipcRenderer.send("session:start", { task });
+    start(task: string, baseBranch?: string): void {
+      ipcRenderer.send("session:start", { task, baseBranch });
     },
     onOpened(callback: (session: { id: string; slug: string; branch: string; worktreePath: string; task: string; lifecycle?: string; completedAt?: string; mergedTo?: string; pendingId?: string }) => void): void {
       ipcRenderer.on("session:opened", (_event, session) => callback(session));
@@ -68,8 +68,8 @@ contextBridge.exposeInMainWorld("volley", {
     updateTodo(sessionId: string, task: string): Promise<{ ok: boolean; error?: string }> {
       return ipcRenderer.invoke("session:update-todo", { sessionId, task });
     },
-    startTodo(sessionId: string): void {
-      ipcRenderer.send("session:start-todo", { sessionId });
+    startTodo(sessionId: string, baseBranch?: string): void {
+      ipcRenderer.send("session:start-todo", { sessionId, baseBranch });
     },
     complete(sessionId: string, mergedTo?: string): Promise<{ ok: boolean; error?: string }> {
       return ipcRenderer.invoke("session:complete", { sessionId, mergedTo });
@@ -123,6 +123,9 @@ contextBridge.exposeInMainWorld("volley", {
     },
     land(sessionId: string): Promise<{ ok: boolean; baseBranch?: string; error?: string }> {
       return ipcRenderer.invoke("git:land", { sessionId });
+    },
+    listBranches(): Promise<{ branches: { name: string; remote: boolean }[]; current: string }> {
+      return ipcRenderer.invoke("git:list-branches");
     },
   },
   run: {

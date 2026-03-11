@@ -34,7 +34,7 @@ function sendSocketMessage(repoRoot: string, message: object): void {
   spawn("node", ["-e", script], { detached: true, stdio: "ignore" }).unref();
 }
 
-export function startSession(task: string, branchPrefix = "vo"): Session {
+export function startSession(task: string, branchPrefix = "vo", baseBranchOverride?: string): Session {
   const repoRoot = getRepoRoot();
   const volleyDir = getWorktreeDir(repoRoot);
   ensureDir(volleyDir);
@@ -51,8 +51,8 @@ export function startSession(task: string, branchPrefix = "vo"): Session {
     throw new Error(`Session "${id}" already exists. Use a different task name or remove it first.`);
   }
 
-  // Create worktree + branch from current HEAD
-  const baseBranch = git("rev-parse --abbrev-ref HEAD", repoRoot);
+  // Create worktree + branch from current HEAD (or override)
+  const baseBranch = baseBranchOverride || git("rev-parse --abbrev-ref HEAD", repoRoot);
   git(`worktree add -b ${branch} "${worktreePath}" ${baseBranch}`, repoRoot);
 
   // Apply .volley.json config (symlinks + setup commands)
@@ -334,7 +334,7 @@ export function updateTodoSession(id: string, task: string): Session {
 /**
  * Start a todo session (creates worktree/branch, moves to in_progress)
  */
-export function startTodoSession(id: string, branchPrefix = "vo"): Session {
+export function startTodoSession(id: string, branchPrefix = "vo", baseBranchOverride?: string): Session {
   const state = loadState();
   const idx = state.sessions.findIndex((s) => s.id === id);
   if (idx === -1) throw new Error(`Session "${id}" not found.`);
@@ -349,8 +349,8 @@ export function startTodoSession(id: string, branchPrefix = "vo"): Session {
   const branch = `${branchPrefix}/${id}`;
   const worktreePath = resolve(join(volleyDir, id));
 
-  // Create worktree + branch from current HEAD
-  const baseBranch = git("rev-parse --abbrev-ref HEAD", repoRoot);
+  // Create worktree + branch from current HEAD (or override)
+  const baseBranch = baseBranchOverride || git("rev-parse --abbrev-ref HEAD", repoRoot);
   git(`worktree add -b ${branch} "${worktreePath}" ${baseBranch}`, repoRoot);
 
   // Apply .volley.json config (symlinks + setup commands)
