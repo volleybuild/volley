@@ -21,9 +21,15 @@ win:
 
 publish:
   provider: github
+  releaseType: release
+
+extraResources:
+  - from: resources/cli
+    to: cli
 
 files:
   - dist/**/*
   - resources/**/*
+  - "!resources/cli"
   - node_modules/**/*
   - "!node_modules/.cache"
