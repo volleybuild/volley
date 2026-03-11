@@ -1,6 +1,7 @@
 import React from "react";
 import { useSessionStore } from "../../store/session-store";
 import { useUiStore } from "../../store/ui-store";
+import { useSessionStatus } from "../../hooks/use-session-status";
 import StatusDot from "../shared/StatusDot";
 import GitDropdown from "./GitDropdown";
 
@@ -23,6 +24,8 @@ export default function SessionHeader() {
   const startCommand = useSessionStore((s) => s.startCommand);
   const initRunTerminal = useSessionStore((s) => s.initRunTerminal);
 
+  const { status: sessionStatus } = useSessionStatus(activeSessionId);
+
   if (!activeSessionId || sessions.size === 0) return null;
 
   const session = sessions.get(activeSessionId);
@@ -30,6 +33,7 @@ export default function SessionHeader() {
 
   const isPending = session.status === "pending";
   const isTodo = session.lifecycle === "todo";
+  const baseBranch = sessionStatus?.sourceBranch || session.baseBranch || "main";
 
   const handleFileTree = () => {
     setFileTreeBasePath(session.worktreePath);
@@ -113,7 +117,7 @@ export default function SessionHeader() {
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-600">
           <path d="M5 12h14M12 5l7 7-7 7" />
         </svg>
-        <span className="text-gray-500">{session.baseBranch || "main"}</span>
+        <span className="text-gray-500">{baseBranch}</span>
       </div>
       <span className="flex-1" />
 

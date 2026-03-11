@@ -1,16 +1,19 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useUiStore } from "../../store/ui-store";
 import Modal, { ModalTitle, ModalActions, ModalButton, ModalInput } from "./Modal";
+import BranchCombobox from "../shared/BranchCombobox";
 
 export default function NewSessionModal() {
   const open = useUiStore((s) => s.newSessionModalOpen);
   const close = useUiStore((s) => s.closeNewSessionModal);
   const inputRef = useRef<HTMLInputElement>(null);
   const [task, setTask] = useState("");
+  const [baseBranch, setBaseBranch] = useState("");
 
   useEffect(() => {
     if (open) {
       setTask("");
+      setBaseBranch("");
       requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, [open]);
@@ -19,7 +22,7 @@ export default function NewSessionModal() {
     const trimmed = task.trim();
     if (!trimmed) return;
     close();
-    window.volley.session.start(trimmed);
+    window.volley.session.start(trimmed, baseBranch || undefined);
   };
 
   return (
@@ -46,6 +49,8 @@ export default function NewSessionModal() {
           }
         }}
       />
+
+      <BranchCombobox value={baseBranch} onChange={setBaseBranch} />
 
       <ModalActions hint="↵ to start">
         <ModalButton onClick={close}>Cancel</ModalButton>
