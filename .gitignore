@@ -5,6 +5,7 @@ dist/
 terminal/dist/
 terminal/node_modules/
 terminal/release/
+terminal/resources/cli/
 website/node_modules/
 website/.next/
 website/out/

@@ -333,21 +333,21 @@ function switchToProject(projectPath: string): void {
 
 // ── CLI spawn helper ─────────────────────────────────────────────────────
 
-/** Env for CLI subprocesses — tells the CLI not to open external terminals */
-const cliEnv = { ...process.env, VOLLEY_TERMINAL: "volley" };
+/** Base env for CLI subprocesses — tells the CLI not to open external terminals */
+const cliBaseEnv = { ...process.env, VOLLEY_TERMINAL: "volley" };
 
 function spawnCli(args: string[], cwd: string) {
-  const [cmd, fullArgs] = spawnCliArgs(args);
+  const [cmd, fullArgs, extraEnv] = spawnCliArgs(args);
   return spawn(cmd, fullArgs, {
     cwd,
-    env: cliEnv,
+    env: { ...cliBaseEnv, ...extraEnv },
     stdio: ["ignore", "pipe", "pipe"],
   });
 }
 
 function execCli(args: string[], cwd: string, callback: (err: Error | null, stdout: string, stderr: string) => void) {
-  const [cmd, fullArgs] = spawnCliArgs(args);
-  execFile(cmd, fullArgs, { cwd, env: cliEnv }, callback);
+  const [cmd, fullArgs, extraEnv] = spawnCliArgs(args);
+  execFile(cmd, fullArgs, { cwd, env: { ...cliBaseEnv, ...extraEnv } }, callback);
 }
 
 // ── App startup ──────────────────────────────────────────────────────────
