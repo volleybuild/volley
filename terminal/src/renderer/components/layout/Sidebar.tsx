@@ -8,6 +8,7 @@ import SidebarSection from "../sidebar/SidebarSection";
 import SidebarFolder from "../sidebar/SidebarFolder";
 import TypeGroup from "../sidebar/TypeGroup";
 import ProjectDropdown from "../sidebar/ProjectDropdown";
+import SidebarSearch from "../sidebar/SidebarSearch";
 import IconButton from "../shared/IconButton";
 import type { SessionState, TodoType } from "../../store/types";
 
@@ -149,6 +150,7 @@ export default function Sidebar() {
   const collapsedFolders = useUiStore((s) => s.collapsedFolders);
   const toggleFolder = useUiStore((s) => s.toggleFolder);
   const planningEnabled = useUiStore((s) => s.planningEnabled);
+  const sidebarSearch = useUiStore((s) => s.sidebarSearch);
   const addToast = useUiStore((s) => s.addToast);
 
   const notes = useNoteStore((s) => s.notes);
@@ -175,16 +177,26 @@ export default function Sidebar() {
     fetchTodoFolders();
   }, [fetchTodoFolders]);
 
+  // Search helper
+  const matchesSearch = (query: string, ...fields: (string | undefined | null)[]) => {
+    if (!query) return true;
+    const q = query.toLowerCase();
+    return fields.some((f) => f && f.toLowerCase().includes(q));
+  };
+
   // Group sessions by lifecycle
   const sessionArray = Array.from(sessions.values());
   const allTodoSessions = sessionArray.filter((s) => s.lifecycle === "todo");
-  const todoSessions = todoFilterType === "all"
+  const todoSessions = (todoFilterType === "all"
     ? allTodoSessions
-    : allTodoSessions.filter((s) => (s.todoType || "feature") === todoFilterType);
-  const inProgressSessions = sessionArray.filter(
-    (s) => s.lifecycle === "in_progress" || (!s.lifecycle && s.status !== "exited")
-  );
-  const completedSessions = sessionArray.filter((s) => s.lifecycle === "completed");
+    : allTodoSessions.filter((s) => (s.todoType || "feature") === todoFilterType)
+  ).filter((s) => matchesSearch(sidebarSearch, s.task, s.description));
+  const inProgressSessions = sessionArray
+    .filter((s) => s.lifecycle === "in_progress" || (!s.lifecycle && s.status !== "exited"))
+    .filter((s) => matchesSearch(sidebarSearch, s.slug, s.task, s.branch));
+  const completedSessions = sessionArray
+    .filter((s) => s.lifecycle === "completed")
+    .filter((s) => matchesSearch(sidebarSearch, s.slug, s.task, s.branch));
 
   const isDragging = useRef(false);
 
@@ -211,8 +223,8 @@ export default function Sidebar() {
     document.addEventListener("mouseup", handleMouseUp);
   }, [setSidebarWidth]);
 
-  const activeNotes = notes.filter((n) => n.status === "active");
-  const archivedNotes = notes.filter((n) => n.status === "archived");
+  const activeNotes = notes.filter((n) => n.status === "active" && matchesSearch(sidebarSearch, n.title));
+  const archivedNotes = notes.filter((n) => n.status === "archived" && matchesSearch(sidebarSearch, n.title));
 
   const handleNoteClick = (noteId: string) => {
     useSessionStore.setState({ activeSessionId: null });
@@ -298,10 +310,11 @@ export default function Sidebar() {
   for (const [key, list] of todosByFolder) todosByFolder.set(key, list.sort(alphaTodo));
   const sortedTodoFolders = [...todoFolders].sort((a, b) => a.name.localeCompare(b.name));
 
-  // Type grouping
+  // Type grouping (apply search filter)
+  const filteredAllTodos = allTodoSessions.filter((s) => matchesSearch(sidebarSearch, s.task, s.description));
   const todosByType = new Map<TodoType, SessionState[]>();
   if (todoViewMode === "type") {
-    for (const session of allTodoSessions) {
+    for (const session of filteredAllTodos) {
       const type = session.todoType || "feature";
       const list = todosByType.get(type) ?? [];
       list.push(session);
@@ -492,9 +505,10 @@ export default function Sidebar() {
           </svg>
         </button>
       </div>
+      <SidebarSearch />
       <div className="flex-1 overflow-y-auto px-1.5">
         {/* Notes Section */}
-        {(activeNotes.length > 0 || sidebarSections.notes) && (
+        {(activeNotes.length > 0 || (!sidebarSearch && sidebarSections.notes)) && (
           <SidebarSection
             title="Notes"
             count={activeNotes.length}
@@ -517,6 +531,7 @@ export default function Sidebar() {
             {/* Note folders first */}
             {sortedNoteFolders.map((folder) => {
               const folderNotes = notesByFolder.get(folder.id) ?? [];
+              if (sidebarSearch && folderNotes.length === 0) return null;
               return (
                 <SidebarFolder
                   key={folder.id}
@@ -596,10 +611,10 @@ export default function Sidebar() {
         )}
 
         {/* Todo Section */}
-        {(allTodoSessions.length > 0 || sidebarSections.todo) && (
+        {((sidebarSearch ? filteredAllTodos.length > 0 : allTodoSessions.length > 0) || (!sidebarSearch && sidebarSections.todo)) && (
           <SidebarSection
             title="Todo"
-            count={todoViewMode === "type" ? allTodoSessions.length : todoSessions.length}
+            count={todoViewMode === "type" ? filteredAllTodos.length : todoSessions.length}
             expanded={sidebarSections.todo}
             onToggle={() => toggleSidebarSection("todo")}
             onAddItem={() => openTodoModal()}
@@ -670,6 +685,7 @@ export default function Sidebar() {
                 {/* Todo folders first */}
                 {sortedTodoFolders.map((folder) => {
                   const folderItems = todosByFolder.get(folder.id) ?? [];
+                  if (sidebarSearch && folderItems.length === 0) return null;
                   return (
                     <SidebarFolder
                       key={folder.id}
@@ -726,21 +742,23 @@ export default function Sidebar() {
         )}
 
         {/* In Progress Section */}
-        <SidebarSection
-          title="In Progress"
-          count={inProgressSessions.length}
-          expanded={sidebarSections.inProgress}
-          onToggle={() => toggleSidebarSection("inProgress")}
-        >
-          {inProgressSessions.map((session) => (
-            <TabItem
-              key={session.id}
-              session={session}
-              isActive={session.id === activeSessionId && !activeNoteId}
-              onClick={() => handleSessionClick(session.id)}
-            />
-          ))}
-        </SidebarSection>
+        {(inProgressSessions.length > 0 || !sidebarSearch) && (
+          <SidebarSection
+            title="In Progress"
+            count={inProgressSessions.length}
+            expanded={sidebarSections.inProgress}
+            onToggle={() => toggleSidebarSection("inProgress")}
+          >
+            {inProgressSessions.map((session) => (
+              <TabItem
+                key={session.id}
+                session={session}
+                isActive={session.id === activeSessionId && !activeNoteId}
+                onClick={() => handleSessionClick(session.id)}
+              />
+            ))}
+          </SidebarSection>
+        )}
 
         {/* Completed Section */}
         {completedSessions.length > 0 && (

@@ -45,6 +45,7 @@ interface UiStore {
   todoViewMode: "list" | "type";
   collapsedFolders: Set<string>;
   planningEnabled: boolean;
+  sidebarSearch: string;
 
   setFileTreeBasePath: (basePath: string) => void;
   toggleSidebarSection: (section: "notes" | "archivedNotes" | "todo" | "inProgress" | "completed") => void;
@@ -77,6 +78,7 @@ interface UiStore {
   setTodoViewMode: (mode: "list" | "type") => void;
   toggleFolder: (folderId: string) => void;
   setPlanningEnabled: (enabled: boolean) => void;
+  setSidebarSearch: (q: string) => void;
 }
 
 function createUiStore() {
@@ -113,6 +115,7 @@ function createUiStore() {
   todoViewMode: "list" as const,
   collapsedFolders: new Set<string>(),
   planningEnabled: false,
+  sidebarSearch: "",
   rightPaneWidth: 450,
   sidebarWidth: 260,
   sidebarSections: {
@@ -190,6 +193,7 @@ function createUiStore() {
     return { collapsedFolders: next };
   }),
   setPlanningEnabled: (enabled) => set({ planningEnabled: enabled }),
+  setSidebarSearch: (q) => set({ sidebarSearch: q }),
 }));
 }
 
