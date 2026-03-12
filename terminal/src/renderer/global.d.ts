@@ -97,6 +97,8 @@ interface VolleyApi {
   };
   config: {
     getStartCommand(): Promise<{ command: string | null }>;
+    getLogPath(): Promise<{ path: string }>;
+    openLogFile(): Promise<{ ok: boolean }>;
   };
   settings: {
     getUser(): Promise<UserSettings>;

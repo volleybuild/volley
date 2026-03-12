@@ -28,6 +28,9 @@ export default function SettingsView() {
   const [claudeLoggedIn, setClaudeLoggedIn] = useState(false);
   const [claudeEmail, setClaudeEmail] = useState<string | undefined>();
 
+  // ── Log file ──────────────────────────────────────────────────────────
+  const [logPath, setLogPath] = useState<string | null>(null);
+
   // ── Project config ────────────────────────────────────────────────────
   const [projectConfig, setProjectConfig] = useState<ProjectConfig>({});
   const [projectDirty, setProjectDirty] = useState(false);
@@ -43,6 +46,9 @@ export default function SettingsView() {
     });
     window.volley.settings.getProject().then((c: ProjectConfig) => {
       setProjectConfig(c);
+    });
+    window.volley.config.getLogPath().then(({ path }) => {
+      setLogPath(path);
     });
     checkClaudeAuth();
   }, []);
@@ -405,6 +411,29 @@ export default function SettingsView() {
                 </button>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* ── Troubleshooting Section ──────────────────────────────────── */}
+        <section className="bg-vo-surface rounded-lg border border-vo-border p-4 space-y-3">
+          <h2 className="text-xs font-medium text-gray-300 uppercase tracking-wider">Troubleshooting</h2>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] text-gray-500">Log file</label>
+              <button
+                className="px-3 py-1 rounded text-[11px] font-medium cursor-pointer transition-colors border bg-vo-input border-vo-border text-gray-400 hover:text-gray-200 hover:border-gray-500"
+                onClick={() => window.volley.config.openLogFile()}
+              >
+                Open
+              </button>
+            </div>
+            <p className="text-[12px] text-gray-400 font-mono break-all select-all">
+              {logPath || "Loading..."}
+            </p>
+            <p className="text-[10px] text-gray-600 leading-relaxed">
+              Application logs for debugging session creation, socket connections, and other issues.
+            </p>
           </div>
         </section>
       </div>
