@@ -14,18 +14,22 @@ import GridView from "./components/terminal/GridView";
 import FileViewer from "./components/file-browser/FileViewer";
 import SettingsView from "./components/settings/SettingsView";
 import NewSessionModal from "./components/modals/NewSessionModal";
+import TodoModal from "./components/modals/TodoModal";
 import CommitModal from "./components/modals/CommitModal";
 import RemoveModal from "./components/modals/RemoveModal";
 import LandModal from "./components/modals/LandModal";
 import SwitchProjectModal from "./components/modals/SwitchProjectModal";
 import ToastContainer from "./components/shared/ToastContainer";
+import NoteEditor from "./components/notes/NoteEditor";
 import { useProjectStore } from "./store/project-store";
+import { useNoteStore } from "./store/note-store";
 
 export default function App() {
   const sessions = useSessionStore((s) => s.sessions);
   const gridMode = useSessionStore((s) => s.gridMode);
   const fileViewerOpen = useUiStore((s) => s.fileViewerOpen);
   const settingsOpen = useUiStore((s) => s.settingsOpen);
+  const activeNoteId = useNoteStore((s) => s.activeNoteId);
 
   useIpcListeners();
   useAgentListeners();
@@ -57,6 +61,7 @@ export default function App() {
   const renderContent = () => {
     if (settingsOpen) return <SettingsView />;
     if (fileViewerOpen) return <FileViewer />;
+    if (activeNoteId) return <NoteEditor noteId={activeNoteId} />;
     if (!hasSessions) return <EmptyState />;
     if (gridMode) return <GridView />;
     return <TabbedView />;
@@ -67,12 +72,13 @@ export default function App() {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
-          {!settingsOpen && <SessionHeader />}
-          {!settingsOpen && <SetupWarningBanner />}
+          {!settingsOpen && !activeNoteId && <SessionHeader />}
+          {!settingsOpen && !activeNoteId && <SetupWarningBanner />}
           {renderContent()}
         </div>
       </div>
       <NewSessionModal />
+      <TodoModal />
       <CommitModal />
       <RemoveModal />
       <LandModal />

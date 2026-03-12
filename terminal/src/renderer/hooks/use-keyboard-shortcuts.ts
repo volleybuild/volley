@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useSessionStore } from "../store/session-store";
 import { useUiStore } from "../store/ui-store";
+import { useNoteStore } from "../store/note-store";
 
 export function useKeyboardShortcuts() {
   useEffect(() => {
@@ -9,10 +10,28 @@ export function useKeyboardShortcuts() {
       const sessionStore = useSessionStore.getState();
       const uiStore = useUiStore.getState();
 
+      // Cmd+Shift+N — new note
+      if (meta && e.shiftKey && e.key === "N") {
+        e.preventDefault();
+        useNoteStore.getState().createNote("Untitled").then((note) => {
+          if (note) {
+            useSessionStore.setState({ activeSessionId: null });
+          }
+        });
+        return;
+      }
+
       // Cmd+N — new session
       if (meta && e.key === "n") {
         e.preventDefault();
         uiStore.openNewSessionModal();
+        return;
+      }
+
+      // Cmd+T — new todo
+      if (meta && e.key === "t") {
+        e.preventDefault();
+        uiStore.openTodoModal();
         return;
       }
 
