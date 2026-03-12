@@ -22,6 +22,7 @@ export interface SessionState {
   runFitAddon: FitAddon | null;
   runStatus: "idle" | "running" | "exited";
   runExitCode: number | null;
+  setupWarning?: string;
 }
 
 export interface Toast {

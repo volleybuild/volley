@@ -28,6 +28,8 @@ interface SessionStore {
   initRunTerminal: (sessionId: string) => void;
   disposeRunTerminal: (sessionId: string) => void;
   setRunStatus: (sessionId: string, status: SessionState["runStatus"], exitCode?: number) => void;
+  setSetupWarning: (sessionId: string, warning: string) => void;
+  dismissSetupWarning: (sessionId: string) => void;
   clearAllSessions: () => void;
 }
 
@@ -378,6 +380,24 @@ function createSessionStore() {
       runStatus: status,
       runExitCode: exitCode ?? session.runExitCode,
     });
+    set({ sessions: next });
+  },
+
+  setSetupWarning: (sessionId, warning) => {
+    const { sessions } = get();
+    const session = sessions.get(sessionId);
+    if (!session) return;
+    const next = new Map(sessions);
+    next.set(sessionId, { ...session, setupWarning: warning });
+    set({ sessions: next });
+  },
+
+  dismissSetupWarning: (sessionId) => {
+    const { sessions } = get();
+    const session = sessions.get(sessionId);
+    if (!session) return;
+    const next = new Map(sessions);
+    next.set(sessionId, { ...session, setupWarning: undefined });
     set({ sessions: next });
   },
 

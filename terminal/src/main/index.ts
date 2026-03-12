@@ -335,8 +335,28 @@ function switchToProject(projectPath: string): void {
 
 // ── CLI spawn helper ─────────────────────────────────────────────────────
 
+/** Resolve the user's login shell PATH so packaged app finds tools like yarn/pnpm */
+function resolveShellPath(): string | undefined {
+  try {
+    const shell = process.env.SHELL || "/bin/zsh";
+    return execFileSync(shell, ["-l", "-c", "echo $PATH"], {
+      encoding: "utf-8",
+      timeout: 5000,
+      stdio: ["pipe", "pipe", "pipe"],
+    }).trim();
+  } catch {
+    return undefined;
+  }
+}
+
+const shellPath = resolveShellPath();
+
 /** Base env for CLI subprocesses — tells the CLI not to open external terminals */
-const cliBaseEnv = { ...process.env, VOLLEY_TERMINAL: "volley" };
+const cliBaseEnv: Record<string, string | undefined> = {
+  ...process.env,
+  VOLLEY_TERMINAL: "volley",
+  ...(shellPath ? { PATH: shellPath } : {}),
+};
 
 function spawnCli(args: string[], cwd: string) {
   const [cmd, fullArgs, extraEnv] = spawnCliArgs(args);
@@ -358,6 +378,7 @@ app.whenReady().then(() => {
   const detectedRepo = detectRepoRoot();
   log("cwd:", process.cwd());
   log("__dirname:", __dirname);
+  log("shell PATH:", shellPath ? "resolved" : "using default");
   log("detected repo:", detectedRepo);
 
   ptyManager = new PtyManager();
@@ -521,12 +542,14 @@ app.whenReady().then(() => {
     if (baseBranch) args.push("--base", baseBranch);
     log("session:start CLI args:", args, "cwd:", repoRoot);
     const child = spawnCli(args, repoRoot);
+    let stderrBuf = "";
 
     child.stdout?.on("data", (chunk: Buffer) => {
       mainWindow?.webContents.send("session:setup-output", { pendingId, data: chunk.toString() });
     });
     child.stderr?.on("data", (chunk: Buffer) => {
       const text = chunk.toString();
+      stderrBuf += text;
       log("session:start stderr:", text.trimEnd());
       mainWindow?.webContents.send("session:setup-output", { pendingId, data: text });
     });
@@ -546,6 +569,14 @@ app.whenReady().then(() => {
         // On success, trigger syncSessions to pick up the new session
         // The file watcher should also trigger this, but we do it explicitly to avoid race conditions
         setTimeout(() => syncSessions(), 100);
+
+        // If stderr contained setup failures, warn the renderer after the session opens
+        if (stderrBuf.includes("Command failed:")) {
+          const failedLine = stderrBuf.split("\n").find(l => l.includes("Command failed:"))?.trim() || "Setup command failed";
+          setTimeout(() => {
+            mainWindow?.webContents.send("session:setup-warning", { task, error: failedLine });
+          }, 500);
+        }
       }
     });
   });
@@ -667,12 +698,14 @@ app.whenReady().then(() => {
     if (baseBranch) args.push("--base", baseBranch);
     log("session:start-todo CLI args:", args, "cwd:", repoRoot);
     const child = spawnCli(args, repoRoot);
+    let stderrBuf = "";
 
     child.stdout?.on("data", (chunk: Buffer) => {
       mainWindow?.webContents.send("session:setup-output", { pendingId, data: chunk.toString() });
     });
     child.stderr?.on("data", (chunk: Buffer) => {
       const text = chunk.toString();
+      stderrBuf += text;
       log("session:start-todo stderr:", text.trimEnd());
       mainWindow?.webContents.send("session:setup-output", { pendingId, data: text });
     });
@@ -690,6 +723,13 @@ app.whenReady().then(() => {
         mainWindow?.webContents.send("session:setup-failed", { pendingId, error: `volley start exited with code ${code}` });
       } else {
         setTimeout(() => syncSessions(), 100);
+
+        if (stderrBuf.includes("Command failed:")) {
+          const failedLine = stderrBuf.split("\n").find(l => l.includes("Command failed:"))?.trim() || "Setup command failed";
+          setTimeout(() => {
+            mainWindow?.webContents.send("session:setup-warning", { task: sessionId, error: failedLine });
+          }, 500);
+        }
       }
     });
   });
