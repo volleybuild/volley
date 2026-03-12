@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useSessionStore } from "../store/session-store";
 import { useUiStore } from "../store/ui-store";
 import { useNoteStore } from "../store/note-store";
+import { focusSidebarSearch } from "../components/sidebar/SidebarSearch";
 
 export function useKeyboardShortcuts() {
   useEffect(() => {
@@ -18,6 +19,13 @@ export function useKeyboardShortcuts() {
             useSessionStore.setState({ activeSessionId: null });
           }
         });
+        return;
+      }
+
+      // Cmd+F — focus sidebar search
+      if (meta && e.key === "f") {
+        e.preventDefault();
+        focusSidebarSearch();
         return;
       }
 
