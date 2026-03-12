@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React from "react";
 
 const ICON_CHEVRON_RIGHT = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg>`;
 const ICON_CHEVRON_DOWN = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>`;
@@ -10,7 +10,8 @@ interface Props {
   expanded: boolean;
   onToggle: () => void;
   dimmed?: boolean;
-  onAddItem?: (task: string) => void;
+  onAddItem?: () => void;
+  extraActions?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -21,46 +22,12 @@ export default function SidebarSection({
   onToggle,
   dimmed,
   onAddItem,
+  extraActions,
   children,
 }: Props) {
-  const [isAdding, setIsAdding] = useState(false);
-  const [newTask, setNewTask] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (isAdding) {
-      inputRef.current?.focus();
-    }
-  }, [isAdding]);
-
   const handleAddClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsAdding(true);
-    setNewTask("");
-  };
-
-  const handleSubmit = () => {
-    const trimmed = newTask.trim();
-    if (trimmed && onAddItem) {
-      onAddItem(trimmed);
-    }
-    setIsAdding(false);
-    setNewTask("");
-  };
-
-  const handleCancel = () => {
-    setIsAdding(false);
-    setNewTask("");
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSubmit();
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      handleCancel();
-    }
+    onAddItem?.();
   };
 
   return (
@@ -85,6 +52,7 @@ export default function SidebarSection({
         >
           {count}
         </span>
+        {extraActions}
         {onAddItem && (
           <button
             className="p-0.5 rounded hover:bg-white/[0.08] transition-colors opacity-50 hover:opacity-100"
@@ -98,20 +66,6 @@ export default function SidebarSection({
 
       {expanded && (
         <div className="space-y-0.5 mt-0.5">
-          {isAdding && (
-            <div className="mx-1 mb-1">
-              <input
-                ref={inputRef}
-                type="text"
-                value={newTask}
-                onChange={(e) => setNewTask(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onBlur={handleCancel}
-                placeholder="Enter task description..."
-                className="w-full px-2 py-1.5 text-[11px] bg-white/[0.05] border border-white/[0.1] rounded text-gray-200 placeholder-gray-600 focus:outline-none focus:border-accent/50"
-              />
-            </div>
-          )}
           {children}
         </div>
       )}

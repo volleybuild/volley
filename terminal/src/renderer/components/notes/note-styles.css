@@ -1,0 +1,85 @@
+.note-editor-container .tiptap {
+  outline: none;
+  color: #d1d5db;
+  font-size: 14px;
+  line-height: 1.7;
+  min-height: 200px;
+}
+
+.note-editor-container .tiptap h1 {
+  font-size: 1.75em;
+  font-weight: 700;
+  color: #f3f4f6;
+  margin: 0.5em 0 0.3em;
+}
+
+.note-editor-container .tiptap h2 {
+  font-size: 1.35em;
+  font-weight: 600;
+  color: #e5e7eb;
+  margin: 0.5em 0 0.3em;
+}
+
+.note-editor-container .tiptap h3 {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #d1d5db;
+  margin: 0.5em 0 0.3em;
+}
+
+.note-editor-container .tiptap ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.note-editor-container .tiptap ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.note-editor-container .tiptap li {
+  margin: 0.15em 0;
+}
+
+.note-editor-container .tiptap blockquote {
+  border-left: 3px solid rgba(110, 231, 183, 0.3);
+  padding-left: 1em;
+  margin: 0.5em 0;
+  color: #9ca3af;
+}
+
+.note-editor-container .tiptap code {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  padding: 0.15em 0.3em;
+  font-size: 0.9em;
+  font-family: ui-monospace, monospace;
+}
+
+.note-editor-container .tiptap pre {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  padding: 0.75em 1em;
+  margin: 0.5em 0;
+  overflow-x: auto;
+}
+
+.note-editor-container .tiptap pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+.note-editor-container .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #4b5563;
+  pointer-events: none;
+  height: 0;
+}
+
+.note-editor-container .tiptap p {
+  margin: 0.25em 0;
+}
