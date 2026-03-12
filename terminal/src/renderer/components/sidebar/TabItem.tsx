@@ -3,10 +3,11 @@ import type { SessionState } from "../../store/types";
 import { useAgentStore } from "../../store/agent-store";
 import { formatElapsed } from "../../utils/format";
 import StatusDot from "../shared/StatusDot";
+import IconButton from "../shared/IconButton";
 
-const ICON_BRANCH = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M12 8v4m0 0l-6 6m6-6l6 6"/></svg>`;
-const ICON_CHECK = `<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`;
-const ICON_PLAY = `<svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+const ICON_BRANCH = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M12 8v4m0 0l-6 6m6-6l6 6"/></svg>`;
+const ICON_CHECK = `<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`;
+const ICON_PLAY = `<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
 
 interface LineStat {
   files: number;
@@ -64,7 +65,7 @@ export default function TabItem({ session, isActive, onClick, onDelete, draggabl
 
   return (
     <div
-      className={`group flex items-start gap-2 px-2.5 py-2 cursor-pointer hover:bg-white/[0.03] rounded text-xs titlebar-no-drag transition-colors duration-75 relative ${
+      className={`group flex items-start gap-2 px-2.5 py-2 cursor-pointer hover:bg-white/[0.03] rounded text-[13px] titlebar-no-drag transition-colors duration-75 relative ${
         isActive ? "bg-white/[0.03]" : ""
       } ${isCompleted ? "opacity-60" : ""} ${isDragOver ? "border-t border-accent-bright/50" : "border-t border-transparent"} ${indented ? "pl-4" : ""}`}
       onClick={onClick}
@@ -75,7 +76,7 @@ export default function TabItem({ session, isActive, onClick, onDelete, draggabl
       onDragEnd={onDragEnd}
     >
       {isActive && (
-        <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 rounded-r ${
+        <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 rounded-r ${
           isCompleted ? "bg-green-500/50" : "bg-accent-bright"
         }`} />
       )}
@@ -83,37 +84,38 @@ export default function TabItem({ session, isActive, onClick, onDelete, draggabl
       {/* Status indicator — for todos, the dot becomes an X on hover */}
       {isTodo ? (
         onDelete ? (
-          <>
-            <span className={`mt-[5px] w-[7px] h-[7px] rounded-full flex-shrink-0 group-hover:hidden ${
+          <span className="w-5 h-5 flex-shrink-0 relative">
+            <span className={`absolute inset-0 m-auto w-2 h-2 rounded-full group-hover:hidden ${
               session.todoType === "bug" ? "bg-red-400" :
               session.todoType === "improvement" ? "bg-blue-400" :
               "bg-accent-bright"
             }`} />
-            <button
-              className="hidden group-hover:flex items-center justify-center w-[11px] h-[11px] mt-[3px] flex-shrink-0 rounded-sm hover:bg-red-500/15 text-gray-500 hover:text-red-400 transition-colors"
+            <IconButton
               onClick={handleDelete}
               title="Delete todo"
+              variant="danger"
+              className="hidden group-hover:flex absolute inset-0"
             >
-              <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
-            </button>
-          </>
+            </IconButton>
+          </span>
         ) : (
-          <span className={`mt-[5px] w-[7px] h-[7px] rounded-full flex-shrink-0 ${
+          <span className={`mt-[5px] w-2 h-2 rounded-full flex-shrink-0 ${
             session.todoType === "bug" ? "bg-red-400" :
             session.todoType === "improvement" ? "bg-blue-400" :
             "bg-accent-bright"
           }`} />
         )
       ) : isCompleted ? (
-        <span className="mt-[4px] w-[9px] h-[9px] rounded-full bg-green-500/30 flex-shrink-0 flex items-center justify-center text-green-400">
+        <span className="mt-[4px] w-[10px] h-[10px] rounded-full bg-green-500/30 flex-shrink-0 flex items-center justify-center text-green-400">
           <span dangerouslySetInnerHTML={{ __html: ICON_CHECK }} />
         </span>
       ) : !isPending && agentStatus !== "idle" ? (
         <span
-          className={`mt-[5px] w-[7px] h-[7px] rounded-full flex-shrink-0 ${
+          className={`mt-[5px] w-2 h-2 rounded-full flex-shrink-0 ${
             agentStatus === "thinking" ? "bg-accent-bright animate-pulse" :
             agentStatus === "coding" ? "bg-yellow-400 animate-pulse" :
             agentStatus === "waiting" ? "bg-accent-blue animate-pulse" :
@@ -140,19 +142,19 @@ export default function TabItem({ session, isActive, onClick, onDelete, draggabl
           {isTodo ? (
             <span className="flex items-center gap-0.5 flex-shrink-0">
               {session.planStatus === "pending" && (
-                <span className="text-[10px] text-gray-500" title="Plan pending">&#x25CC;</span>
+                <span className="text-[11px] text-gray-500 flex items-center justify-center w-5 h-5" title="Plan pending">&#x25CC;</span>
               )}
               {session.planStatus === "planning" && (
-                <span className="text-[10px] text-accent-bright animate-pulse" title="Planning...">&#x25D1;</span>
+                <span className="text-[11px] text-accent-bright animate-pulse flex items-center justify-center w-5 h-5" title="Planning...">&#x25D1;</span>
               )}
               {session.planStatus === "ready" && (
-                <span className="text-[10px] text-green-400" title="Plan ready">&#x25CF;</span>
+                <span className="text-[11px] text-green-400 flex items-center justify-center w-5 h-5" title="Plan ready">&#x25CF;</span>
               )}
               {session.planStatus === "failed" && (
-                <span className="text-[10px] text-red-400" title="Plan failed">&#x2715;</span>
+                <span className="text-[11px] text-red-400 flex items-center justify-center w-5 h-5" title="Plan failed">&#x2715;</span>
               )}
               <button
-                className="p-0.5 rounded text-accent hover:bg-accent/20 transition-colors flex items-center justify-center"
+                className="w-5 h-5 rounded text-accent hover:bg-accent/20 transition-colors flex items-center justify-center"
                 onClick={handleStartTodo}
                 title="Start session"
               >
@@ -160,15 +162,15 @@ export default function TabItem({ session, isActive, onClick, onDelete, draggabl
               </button>
             </span>
           ) : isCompleted ? (
-            <span className="text-[10px] text-gray-600 flex-shrink-0">
+            <span className="text-[11px] text-gray-600 flex-shrink-0">
               {session.completedAt ? formatElapsed(now - session.completedAt) : ""}
             </span>
           ) : isPending ? (
-            <span className="text-[10px] text-gray-500 flex-shrink-0">
+            <span className="text-[11px] text-gray-500 flex-shrink-0">
               Setting up...
             </span>
           ) : session.exitCode !== null ? (
-            <span className={`flex-shrink-0 rounded-full px-1.5 text-[10px] leading-4 whitespace-nowrap ${
+            <span className={`flex-shrink-0 rounded-full px-1.5 text-[11px] leading-4 whitespace-nowrap ${
               session.exitCode === 0
                 ? "bg-green-500/15 text-green-400"
                 : "bg-red-500/15 text-red-400"
@@ -176,7 +178,7 @@ export default function TabItem({ session, isActive, onClick, onDelete, draggabl
               exit {session.exitCode}
             </span>
           ) : (
-            <span className="tabular-nums text-[10px] text-gray-600 flex-shrink-0">
+            <span className="tabular-nums text-[11px] text-gray-600 flex-shrink-0">
               {formatElapsed(now - session.startTime)}
             </span>
           )}
@@ -185,12 +187,12 @@ export default function TabItem({ session, isActive, onClick, onDelete, draggabl
         {/* Branch info - only for in_progress sessions */}
         {!isPending && !isTodo && !isCompleted && (
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center gap-1 text-[10px] text-accent-cyan/60 truncate">
+            <span className="inline-flex items-center gap-1 text-[11px] text-accent-cyan/60 truncate">
               <span dangerouslySetInnerHTML={{ __html: ICON_BRANCH }} />
               {session.branch}
             </span>
             {agentStatus !== "idle" && (
-              <span className={`inline-flex items-center gap-1 text-[9px] rounded-full px-1.5 leading-[16px] flex-shrink-0 whitespace-nowrap ${
+              <span className={`inline-flex items-center gap-1 text-[10px] rounded-full px-1.5 leading-[16px] flex-shrink-0 whitespace-nowrap ${
                 agentStatus === "thinking" ? "text-accent-bright bg-accent-bright/10" :
                 agentStatus === "coding" ? "text-yellow-400 bg-yellow-500/10" :
                 agentStatus === "waiting" ? "text-accent-cyan bg-accent-cyan/10" :
@@ -218,14 +220,14 @@ export default function TabItem({ session, isActive, onClick, onDelete, draggabl
 
         {/* Merged to info for completed sessions */}
         {isCompleted && session.mergedTo && (
-          <span className="text-[10px] text-gray-600">
+          <span className="text-[11px] text-gray-600">
             Merged to {session.mergedTo}
           </span>
         )}
 
         {/* Stats for in_progress sessions */}
         {!isPending && !isTodo && !isCompleted && hasStats && (
-          <div className="flex items-center gap-1.5 text-[10px] tabular-nums mt-0.5 text-gray-500">
+          <div className="flex items-center gap-1.5 text-[11px] tabular-nums mt-0.5 text-gray-500">
             <span>{stat!.files} {stat!.files === 1 ? "file" : "files"}</span>
             <span className="text-gray-700">·</span>
             <span className="text-green-400">+{stat!.insertions}</span>

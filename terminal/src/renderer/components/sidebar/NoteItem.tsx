@@ -1,4 +1,5 @@
 import React from "react";
+import IconButton from "../shared/IconButton";
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -32,7 +33,7 @@ export default function NoteItem({ note, isActive, onClick, onDelete, onArchive,
 
   return (
     <div
-      className={`group flex items-start gap-2 px-2.5 py-2 cursor-pointer hover:bg-white/[0.03] rounded text-xs titlebar-no-drag transition-colors duration-75 relative ${
+      className={`group flex items-start gap-2 px-2.5 py-2 cursor-pointer hover:bg-white/[0.03] rounded text-[13px] titlebar-no-drag transition-colors duration-75 relative ${
         isActive ? "bg-white/[0.03]" : ""
       } ${isArchived ? "opacity-60" : ""} ${isDragOver ? "border-t border-accent-bright/50" : "border-t border-transparent"} ${indented ? "pl-4" : ""}`}
       onClick={onClick}
@@ -43,13 +44,13 @@ export default function NoteItem({ note, isActive, onClick, onDelete, onArchive,
       onDragEnd={onDragEnd}
     >
       {isActive && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 rounded-r bg-accent-bright" />
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 rounded-r bg-accent-bright" />
       )}
 
       {/* Document icon */}
       <svg
-        width="12"
-        height="12"
+        width="14"
+        height="14"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -71,36 +72,37 @@ export default function NoteItem({ note, isActive, onClick, onDelete, onArchive,
           >
             {note.title || "Untitled"}
           </span>
-          <span className="flex items-center gap-0.5 flex-shrink-0">
+          <span className="flex items-center gap-0.5 flex-shrink-0 h-5">
             {/* Timestamp — hidden on hover when actions show */}
-            <span className="text-[10px] text-gray-600 tabular-nums group-hover:hidden">
+            <span className="text-[11px] text-gray-600 tabular-nums group-hover:hidden leading-5">
               {relativeTime(note.updatedAt)}
             </span>
             {/* Hover actions */}
             {onArchive && !isArchived && (
-              <button
-                className="hidden group-hover:flex items-center justify-center w-4 h-4 rounded hover:bg-white/[0.08] text-gray-500 hover:text-gray-300 transition-colors"
+              <IconButton
                 onClick={(e) => { e.stopPropagation(); onArchive(); }}
                 title="Archive note"
+                className="hidden group-hover:flex"
               >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polyline points="21 8 21 21 3 21 3 8" />
                   <rect x="1" y="3" width="22" height="5" />
                   <line x1="10" y1="12" x2="14" y2="12" />
                 </svg>
-              </button>
+              </IconButton>
             )}
             {onDelete && (
-              <button
-                className="hidden group-hover:flex items-center justify-center w-4 h-4 rounded hover:bg-red-500/15 text-gray-500 hover:text-red-400 transition-colors"
+              <IconButton
                 onClick={(e) => { e.stopPropagation(); onDelete(); }}
                 title="Delete note"
+                variant="danger"
+                className="hidden group-hover:flex"
               >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
-              </button>
+              </IconButton>
             )}
           </span>
         </div>

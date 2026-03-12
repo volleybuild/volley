@@ -173,8 +173,8 @@
 }
 .diff-viewer .d2h-code-wrapper {
   font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, monospace;
-  font-size: 11px;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.6;
 }
 .diff-viewer .d2h-diff-table {
   border-collapse: collapse;
@@ -210,26 +210,37 @@
 }
 /* Insertions */
 .diff-viewer .d2h-ins {
-  background: rgba(110, 231, 183, 0.06);
+  background: rgba(110, 231, 183, 0.08);
 }
 .diff-viewer .d2h-ins .d2h-code-line-prefix,
 .diff-viewer .d2h-ins .d2h-code-line-ctn {
   color: #6ee7b7;
 }
+/* Inline word-level insertion highlight */
+.diff-viewer .d2h-ins .d2h-change {
+  background: rgba(110, 231, 183, 0.18);
+  border-radius: 2px;
+}
 /* Deletions */
 .diff-viewer .d2h-del {
-  background: rgba(248, 113, 113, 0.06);
+  background: rgba(248, 113, 113, 0.08);
 }
 .diff-viewer .d2h-del .d2h-code-line-prefix,
 .diff-viewer .d2h-del .d2h-code-line-ctn {
   color: #f87171;
+}
+/* Inline word-level deletion highlight */
+.diff-viewer .d2h-del .d2h-change {
+  background: rgba(248, 113, 113, 0.18);
+  border-radius: 2px;
 }
 /* Info/hunk headers */
 .diff-viewer .d2h-info {
   background: rgba(96, 165, 250, 0.05);
   color: #60a5fa;
   border: none;
-  padding: 4px 12px;
+  padding: 6px 12px;
+  font-size: 11px;
 }
 .diff-viewer .d2h-emptyplaceholder {
   background: rgba(255, 255, 255, 0.02);

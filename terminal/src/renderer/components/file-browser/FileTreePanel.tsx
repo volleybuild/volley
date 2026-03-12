@@ -76,12 +76,12 @@ export default function FileTreePanel() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="h-1 flex-shrink-0" />
-      <div className="flex items-center px-3 py-1 flex-shrink-0">
-        <span className="text-gray-500 text-[11px] tracking-wide truncate">
+      <div className="flex items-center px-3 py-1.5 flex-shrink-0">
+        <span className="text-gray-500 text-[11px] font-medium tracking-wide truncate">
           {rootName}
         </span>
       </div>
-      <div className="flex-1 overflow-y-auto text-xs">
+      <div className="flex-1 overflow-y-auto">
         {entries.map((entry) => (
           <FileTreeEntry
             key={entry.path}

@@ -264,7 +264,7 @@ export default function TerminalPrompt({ sessionId, disabled = false }: Props) {
               >
                 ×
               </button>
-              <div className="text-[8px] text-gray-600 text-center mt-0.5 truncate max-w-12">
+              <div className="text-[9px] text-gray-600 text-center mt-0.5 truncate max-w-12">
                 {att.name}
               </div>
             </div>
@@ -283,10 +283,10 @@ export default function TerminalPrompt({ sessionId, disabled = false }: Props) {
       )}
 
       {/* Hints row */}
-      <div className="px-4 pt-2 pb-1 min-h-[24px]">
+      <div className="px-4 pt-3 pb-1.5 min-h-[24px]">
         {isBusy ? (
-          <div className="flex items-center gap-2 text-[10px] text-gray-500">
-            <span className="inline-block w-1 h-1 rounded-full bg-accent-bright animate-pulse" />
+          <div className="flex items-center gap-2 text-[11px] text-gray-500">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent-bright animate-pulse" />
             <span>
               {status === "thinking"
                 ? "Thinking..."
@@ -303,33 +303,33 @@ export default function TerminalPrompt({ sessionId, disabled = false }: Props) {
             </button>
           </div>
         ) : disabled ? (
-          <div className="text-[10px] text-gray-600">
+          <div className="text-[11px] text-gray-600">
             Configure API key in Settings to use the agent
           </div>
         ) : (
-          <div className="flex items-center gap-2.5 text-[10px] text-gray-600">
-            <span>
-              <kbd className="text-gray-500">/</kbd> skills
+          <div className="flex items-center gap-3 text-[11px] text-gray-600">
+            <span className="flex items-center gap-1">
+              <kbd className="text-gray-500 bg-white/[0.06] px-1.5 py-0.5 rounded text-[11px] leading-none border border-white/[0.06]">/</kbd> skills
             </span>
-            <span>
-              <kbd className="text-gray-500">⌘V</kbd> paste image
+            <span className="flex items-center gap-1">
+              <kbd className="text-gray-500 bg-white/[0.06] px-1.5 py-0.5 rounded text-[11px] leading-none border border-white/[0.06]">⌘V</kbd> paste image
             </span>
-            <span>
-              <kbd className="text-gray-500">↵</kbd> send
+            <span className="flex items-center gap-1">
+              <kbd className="text-gray-500 bg-white/[0.06] px-1.5 py-0.5 rounded text-[11px] leading-none border border-white/[0.06]">↵</kbd> send
             </span>
           </div>
         )}
       </div>
 
       {/* Input line */}
-      <div className="flex items-start gap-2 px-4 pt-1 pb-3">
+      <div className="flex items-start gap-2 px-4 pt-1.5 pb-3">
         <span
-          className={`text-[13px] font-mono select-none leading-[20px] flex-shrink-0 ${
+          className={`text-[15px] font-mono font-bold select-none leading-[20px] flex-shrink-0 ${
             isBusy
               ? "text-gray-700"
               : disabled
                 ? "text-gray-700"
-                : "text-gray-500"
+                : "text-accent-bright/70"
           }`}
         >
           ›

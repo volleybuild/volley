@@ -12,7 +12,7 @@ export default function RightPaneTabBar() {
   const hasRunTerminal = activeSession?.runTerminal != null;
 
   const tabClass = (tab: string, active: boolean, enabled: boolean) =>
-    `px-2 py-0.5 rounded text-[10px] transition-colors duration-150 ${
+    `px-2.5 py-1 rounded text-[12px] transition-colors duration-150 ${
       !enabled
         ? "text-gray-700 cursor-default"
         : active
@@ -32,7 +32,7 @@ export default function RightPaneTabBar() {
   };
 
   return (
-    <div className="flex items-center gap-1 px-2 py-0.5 bg-vo-surface flex-shrink-0 select-none border-b border-white/[0.06]">
+    <div className="flex items-center gap-1 px-2 py-1 bg-vo-surface flex-shrink-0 select-none border-b border-white/[0.06]">
       <button
         className={tabClass("terminal", rightPaneView === "terminal", true)}
         onClick={() => handleTabClick("terminal")}
@@ -67,7 +67,7 @@ export default function RightPaneTabBar() {
           )}
           Run
           {hasRunTerminal && activeSession!.runStatus === "exited" && (
-            <span className="text-gray-600 text-[9px]">exit {activeSession!.runExitCode}</span>
+            <span className="text-gray-600 text-[10px]">exit {activeSession!.runExitCode}</span>
           )}
         </span>
       </button>
@@ -89,11 +89,14 @@ export default function RightPaneTabBar() {
       )}
       <span className="flex-1" />
       <button
-        className="text-gray-600 hover:text-gray-400 text-[10px] px-1 cursor-pointer"
+        className="w-5 h-5 flex items-center justify-center rounded text-gray-600 hover:text-gray-400 hover:bg-white/[0.06] cursor-pointer transition-colors"
         onClick={() => setRightPaneView(null)}
         title="Close pane"
       >
-        ×
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
       </button>
     </div>
   );

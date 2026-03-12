@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import IconButton from "../shared/IconButton";
 
 interface Props {
   folder: FolderData;
@@ -81,7 +82,7 @@ export default function SidebarFolder({
   return (
     <div className="mb-0.5">
       <div
-        className={`group flex items-center gap-1 px-2 py-1 text-[10px] cursor-pointer hover:bg-white/[0.03] rounded transition-colors ${
+        className={`group flex items-center gap-1.5 px-2 py-1.5 text-[13px] cursor-pointer hover:bg-white/[0.03] rounded transition-colors ${
           isDragOver ? "ring-1 ring-accent-bright/50 bg-accent-bright/5" : ""
         }`}
         onClick={onToggle}
@@ -97,8 +98,8 @@ export default function SidebarFolder({
         {/* Chevron */}
         <span className="flex-shrink-0 opacity-50">
           <svg
-            width="8"
-            height="8"
+            width="12"
+            height="12"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -111,8 +112,8 @@ export default function SidebarFolder({
 
         {/* Folder icon */}
         <svg
-          width="11"
-          height="11"
+          width="14"
+          height="14"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -137,7 +138,7 @@ export default function SidebarFolder({
               }
             }}
             onClick={(e) => e.stopPropagation()}
-            className="flex-1 min-w-0 bg-transparent border border-white/10 rounded px-1 py-0 text-[10px] text-gray-300 outline-none focus:border-accent-bright/40"
+            className="flex-1 min-w-0 bg-transparent border border-white/10 rounded px-2 py-0.5 text-[13px] text-gray-300 outline-none focus:border-accent-bright/40 font-medium"
           />
         ) : (
           <span className="flex-1 min-w-0 truncate text-gray-400 font-medium">
@@ -146,43 +147,42 @@ export default function SidebarFolder({
         )}
 
         {/* Count */}
-        <span className="text-[9px] text-gray-600 flex-shrink-0">{itemCount}</span>
+        <span className="text-[10px] text-gray-600 flex-shrink-0">{itemCount}</span>
 
         {/* Hover actions */}
         {!editing && (
           <span className="hidden group-hover:flex items-center gap-0.5 flex-shrink-0">
-            <button
-              className="p-0.5 rounded hover:bg-white/[0.08] text-gray-500 hover:text-gray-300 transition-colors"
+            <IconButton
               onClick={(e) => {
                 e.stopPropagation();
                 setEditing(true);
               }}
               title="Rename folder"
             >
-              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
                 <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
-            </button>
-            <button
-              className="p-0.5 rounded hover:bg-red-500/15 text-gray-500 hover:text-red-400 transition-colors"
+            </IconButton>
+            <IconButton
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete();
               }}
               title="Delete folder"
+              variant="danger"
             >
-              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
-            </button>
+            </IconButton>
           </span>
         )}
       </div>
 
       {expanded && (
-        <div className="pl-3 space-y-0.5 mt-0.5">{children}</div>
+        <div className="pl-4 space-y-0.5 mt-0.5">{children}</div>
       )}
     </div>
   );

@@ -8,6 +8,7 @@ import SidebarSection from "../sidebar/SidebarSection";
 import SidebarFolder from "../sidebar/SidebarFolder";
 import TypeGroup from "../sidebar/TypeGroup";
 import ProjectDropdown from "../sidebar/ProjectDropdown";
+import IconButton from "../shared/IconButton";
 import type { SessionState, TodoType } from "../../store/types";
 
 const FILTER_OPTIONS = [
@@ -42,7 +43,7 @@ function TodoFilterPopover({
               onSelect(opt.value);
               onClose();
             }}
-            className={`w-full text-left px-3 py-1.5 text-[11px] transition-colors cursor-pointer flex items-center gap-2 ${
+            className={`w-full text-left px-3 py-1.5 text-[12px] transition-colors cursor-pointer flex items-center gap-2 ${
               activeFilter === opt.value
                 ? "bg-white/[0.06] text-white"
                 : "text-gray-400 hover:bg-white/[0.04] hover:text-gray-200"
@@ -88,11 +89,11 @@ function FolderCreateInput({
   };
 
   return (
-    <div className="flex items-center gap-1 px-2 py-1 mb-0.5">
+    <div className="flex items-center gap-1.5 px-2 py-1 mb-0.5">
       {/* Folder icon */}
       <svg
-        width="11"
-        height="11"
+        width="14"
+        height="14"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -117,7 +118,7 @@ function FolderCreateInput({
           }
         }}
         placeholder="Folder name"
-        className="flex-1 min-w-0 bg-transparent border border-accent-bright/40 rounded px-1.5 py-0.5 text-[10px] text-gray-300 outline-none placeholder:text-gray-600"
+        className="flex-1 min-w-0 bg-transparent border border-accent-bright/40 rounded px-2 py-1 text-[13px] text-gray-300 outline-none placeholder:text-gray-600 font-medium"
       />
     </div>
   );
@@ -324,17 +325,16 @@ export default function Sidebar() {
 
   // ── View mode toggle + filter button ───────────────────────────────────
   const viewModeToggle = (
-    <button
-      className={`p-0.5 rounded hover:bg-white/[0.08] transition-colors ${
-        todoViewMode === "type" ? "opacity-100 text-accent-bright" : "opacity-50 hover:opacity-100"
-      }`}
+    <IconButton
+      size="md"
       onClick={(e) => {
         e.stopPropagation();
         setTodoViewMode(todoViewMode === "list" ? "type" : "list");
       }}
       title={todoViewMode === "list" ? "Group by type" : "List view"}
+      className={todoViewMode === "type" ? "opacity-100 text-accent-bright" : "opacity-50 hover:opacity-100"}
     >
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
         {todoViewMode === "list" ? (
           // Stack/group icon
           <>
@@ -355,44 +355,44 @@ export default function Sidebar() {
           </>
         )}
       </svg>
-    </button>
+    </IconButton>
   );
 
   const filterButton = (
-    <div className="relative flex items-center gap-1">
+    <div className="relative flex items-center gap-0.5">
       {planningEnabled && hasPendingPlans && (
-        <button
-          className="p-0.5 rounded hover:bg-white/[0.08] transition-colors opacity-50 hover:opacity-100 text-blue-400"
+        <IconButton
+          size="md"
           onClick={(e) => {
             e.stopPropagation();
             handlePlanAll();
           }}
           title="Plan all pending todos"
+          className="opacity-50 hover:opacity-100 text-blue-400"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
             <polyline points="14 2 14 8 20 8" />
             <line x1="16" y1="13" x2="8" y2="13" />
             <line x1="16" y1="17" x2="8" y2="17" />
           </svg>
-        </button>
+        </IconButton>
       )}
       {viewModeToggle}
       {todoViewMode === "list" && (
-        <button
-          className={`p-0.5 rounded hover:bg-white/[0.08] transition-colors ${
-            todoFilterType !== "all" ? "opacity-100 text-accent-bright" : "opacity-50 hover:opacity-100"
-          }`}
+        <IconButton
+          size="md"
           onClick={(e) => {
             e.stopPropagation();
             setFilterOpen(!filterOpen);
           }}
           title="Filter by type"
+          className={todoFilterType !== "all" ? "opacity-100 text-accent-bright" : "opacity-50 hover:opacity-100"}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
           </svg>
-        </button>
+        </IconButton>
       )}
       <TodoFilterPopover
         open={filterOpen}
@@ -405,18 +405,19 @@ export default function Sidebar() {
 
   // ── Notes extra actions (folder icon + add note) ──────────────────────
   const notesFolderButton = (
-    <button
-      className="p-0.5 rounded hover:bg-white/[0.08] transition-colors opacity-50 hover:opacity-100"
+    <IconButton
+      size="md"
       onClick={(e) => {
         e.stopPropagation();
         handleCreateNoteFolder();
       }}
       title="Create folder"
+      className="opacity-50 hover:opacity-100"
     >
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
         <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
       </svg>
-    </button>
+    </IconButton>
   );
 
   // ── Root drop zone for moving items out of folders ────────────────────
@@ -473,7 +474,7 @@ export default function Sidebar() {
         </span>
       </div>
       <div className="px-3 py-1.5 flex-shrink-0 flex items-center justify-between">
-        <span className="text-[10px] font-medium tracking-widest text-gray-600 uppercase">Sessions</span>
+        <span className="text-[11px] font-medium tracking-widest text-gray-600 uppercase">Sessions</span>
         <button
           className={`titlebar-no-drag flex items-center justify-center w-5 h-5 rounded transition-colors duration-150 border-none cursor-pointer ${
             gridMode
@@ -605,18 +606,19 @@ export default function Sidebar() {
             extraActions={
               <div className="flex items-center gap-0.5">
                 {todoViewMode === "list" && (
-                  <button
-                    className="p-0.5 rounded hover:bg-white/[0.08] transition-colors opacity-50 hover:opacity-100"
+                  <IconButton
+                    size="md"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleCreateTodoFolder();
                     }}
                     title="Create folder"
+                    className="opacity-50 hover:opacity-100"
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
                     </svg>
-                  </button>
+                  </IconButton>
                 )}
                 {filterButton}
               </div>
@@ -760,20 +762,20 @@ export default function Sidebar() {
           </SidebarSection>
         )}
       </div>
-      <div className="px-3 py-2.5 flex-shrink-0 space-y-1.5">
+      <div className="px-3 py-3 flex-shrink-0 space-y-1.5">
         <button
-          className="titlebar-no-drag w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-[11px] text-gray-500 hover:text-gray-300 hover:bg-white/[0.04] cursor-pointer transition-colors duration-75 border border-white/[0.06]"
+          className="titlebar-no-drag w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-[12px] text-gray-500 hover:text-gray-300 hover:bg-white/[0.04] cursor-pointer transition-colors duration-75 border border-white/[0.06]"
           title="New session (\u2318N)"
           onClick={openNewSessionModal}
         >
           + New session
         </button>
         <button
-          className="titlebar-no-drag w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-[11px] text-gray-600 hover:text-gray-400 hover:bg-white/[0.04] cursor-pointer transition-colors duration-75"
+          className="titlebar-no-drag w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-[12px] text-gray-600 hover:text-gray-400 hover:bg-white/[0.04] cursor-pointer transition-colors duration-75"
           title="Settings"
           onClick={() => useUiStore.getState().openSettings()}
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="12" cy="12" r="3" />
             <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
           </svg>

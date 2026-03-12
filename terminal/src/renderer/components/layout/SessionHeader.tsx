@@ -67,8 +67,8 @@ export default function SessionHeader() {
 
   if (isPending) {
     return (
-      <div className="titlebar-drag flex items-center gap-2 px-3 pt-3 pb-1 flex-shrink-0 text-[11px] select-none bg-vo-base border-b border-white/[0.06]">
-        <StatusDot status={session.status} className="w-[7px] h-[7px]" />
+      <div className="titlebar-drag flex items-center gap-2 px-3 pt-3 pb-1 flex-shrink-0 text-[12px] select-none bg-vo-base border-b border-white/[0.06]">
+        <StatusDot status={session.status} className="w-2 h-2" />
         <span className="text-gray-200 font-medium">{session.slug}</span>
         <span className="text-gray-500">Setting up...</span>
       </div>
@@ -77,7 +77,7 @@ export default function SessionHeader() {
 
   if (isTodo) {
     return (
-      <div className="titlebar-drag flex items-center gap-2 px-3 pt-3 pb-1 flex-shrink-0 text-[11px] select-none bg-vo-base border-b border-white/[0.06]">
+      <div className="titlebar-drag flex items-center gap-2 px-3 pt-3 pb-1 flex-shrink-0 text-[12px] select-none bg-vo-base border-b border-white/[0.06]">
         {/* Hollow circle */}
         <svg width="7" height="7" viewBox="0 0 7 7" fill="none" stroke="currentColor" strokeWidth="1" className="text-gray-500 flex-shrink-0">
           <circle cx="3.5" cy="3.5" r="2.5" />
@@ -85,7 +85,7 @@ export default function SessionHeader() {
         <span className="text-gray-200 font-medium truncate">{session.task}</span>
         <span className="flex-1" />
         <button
-          className="titlebar-no-drag px-2 py-0.5 rounded text-[10px] font-medium bg-accent-bright/15 text-accent-bright hover:bg-accent-bright/25 transition-colors cursor-pointer border border-accent-bright/20"
+          className="titlebar-no-drag px-2 py-0.5 rounded text-[11px] font-medium bg-accent-bright/15 text-accent-bright hover:bg-accent-bright/25 transition-colors cursor-pointer border border-accent-bright/20"
           onClick={() => window.volley.session.startTodo(activeSessionId!)}
         >
           Start
@@ -108,8 +108,8 @@ export default function SessionHeader() {
   }
 
   return (
-    <div className="titlebar-drag flex items-center gap-2 px-3 pt-3 pb-1 flex-shrink-0 text-[11px] select-none bg-vo-base border-b border-white/[0.06]">
-      <StatusDot status={session.status} className="w-[7px] h-[7px]" />
+    <div className="titlebar-drag flex items-center gap-2 px-3 pt-3 pb-1 flex-shrink-0 text-[12px] select-none bg-vo-base border-b border-white/[0.06]">
+      <StatusDot status={session.status} className="w-2 h-2" />
       <span className="text-gray-200 font-medium">{session.slug}</span>
       <span className="text-gray-700 mx-0.5">·</span>
       <div className="flex items-center gap-1.5 text-gray-500">
