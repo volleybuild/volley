@@ -152,6 +152,12 @@ contextBridge.exposeInMainWorld("volley", {
     getStartCommand(): Promise<{ command: string | null }> {
       return ipcRenderer.invoke("config:get-start");
     },
+    getLogPath(): Promise<{ path: string }> {
+      return ipcRenderer.invoke("config:get-log-path");
+    },
+    openLogFile(): Promise<{ ok: boolean }> {
+      return ipcRenderer.invoke("config:open-log-file");
+    },
   },
   settings: {
     getUser(): Promise<any> {

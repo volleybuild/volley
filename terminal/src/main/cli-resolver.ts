@@ -1,6 +1,7 @@
 import { app } from "electron";
 import * as path from "node:path";
 import * as fs from "node:fs";
+import { log } from "./logger";
 
 /**
  * Returns [command, args, env] for spawning the Volley CLI.
@@ -12,8 +13,10 @@ export function spawnCliArgs(cliArgs: string[]): [string, string[], Record<strin
   if (app.isPackaged) {
     const bundled = path.join(process.resourcesPath, "cli", "cli.js");
     if (fs.existsSync(bundled)) {
+      log("CLI: using bundled", bundled);
       return [process.execPath, [bundled, ...cliArgs], { ELECTRON_RUN_AS_NODE: "1" }];
     }
   }
+  log("CLI: using global volley command");
   return ["volley", cliArgs, {}];
 }

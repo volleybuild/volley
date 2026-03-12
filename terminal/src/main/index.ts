@@ -19,6 +19,7 @@ import {
   migrateCurrentRepo,
 } from "./project-manager";
 import type { ProviderName } from "./git-provider";
+import { log, logError, getLogFilePath } from "./logger";
 
 // ── Module-level state ────────────────────────────────────────────────────
 
@@ -57,7 +58,7 @@ function detectRepoRoot(): string | null {
         : path.dirname(path.resolve(gitCommonDir));
       if (fs.existsSync(path.join(mainRepo, ".volley", "state.json")) ||
           fs.existsSync(path.join(mainRepo, ".volley.json"))) {
-        console.log("[volley] detected worktree, using main repo:", mainRepo);
+        log("detected worktree, using main repo:", mainRepo);
         return mainRepo;
       }
     }
@@ -145,10 +146,10 @@ function syncSessions(): void {
   if (!repoRoot) return;
   const state = loadStateFromDisk(repoRoot);
   if (!state) {
-    console.log("[volley] syncSessions: no state file");
+    log("syncSessions: no state file");
     return;
   }
-  console.log("[volley] syncSessions:", state.sessions.length, "sessions in state, known:", knownSessions.size);
+  log("syncSessions:", state.sessions.length, "sessions in state, known:", knownSessions.size);
 
   const activeIds = new Set<string>();
 
@@ -186,7 +187,7 @@ function syncSessions(): void {
         }
       }
 
-      console.log("[volley] sending session:opened for", session.id, `lifecycle=${lifecycle}`, matchedPendingId ? `(was pending ${matchedPendingId})` : "");
+      log("sending session:opened for", session.id, `lifecycle=${lifecycle}`, matchedPendingId ? `(was pending ${matchedPendingId})` : "");
       mainWindow?.webContents.send("session:opened", {
         id: session.id,
         slug: session.id,
@@ -218,7 +219,7 @@ function syncSessions(): void {
         }
       }
 
-      console.log("[volley] lifecycle transition for", session.id, `${previousLifecycle} → ${lifecycle}`, matchedPendingId ? `(was pending ${matchedPendingId})` : "");
+      log("lifecycle transition for", session.id, `${previousLifecycle} → ${lifecycle}`, matchedPendingId ? `(was pending ${matchedPendingId})` : "");
       mainWindow?.webContents.send("session:opened", {
         id: session.id,
         slug: session.id,
@@ -300,6 +301,7 @@ function readProviderOverride(): ProviderName | undefined {
 
 /** Switch to a different project — tears down current state and sets up new one */
 function switchToProject(projectPath: string): void {
+  log("switching project:", repoRoot, "→", projectPath);
   // Tear down current project
   ptyManager.killAll();
   socketServer?.stop();
@@ -354,9 +356,9 @@ function execCli(args: string[], cwd: string, callback: (err: Error | null, stdo
 
 app.whenReady().then(() => {
   const detectedRepo = detectRepoRoot();
-  console.log("[volley] cwd:", process.cwd());
-  console.log("[volley] __dirname:", __dirname);
-  console.log("[volley] detected repo:", detectedRepo);
+  log("cwd:", process.cwd());
+  log("__dirname:", __dirname);
+  log("detected repo:", detectedRepo);
 
   ptyManager = new PtyManager();
 
@@ -482,20 +484,21 @@ app.whenReady().then(() => {
   providerOverride = readProviderOverride();
 
   if (repoRoot) {
-    console.log("[volley] state path:", path.join(repoRoot, ".volley", "state.json"));
-    console.log("[volley] state exists:", fs.existsSync(path.join(repoRoot, ".volley", "state.json")));
+    log("repoRoot:", repoRoot);
+    log("state path:", path.join(repoRoot, ".volley", "state.json"));
+    log("state exists:", fs.existsSync(path.join(repoRoot, ".volley", "state.json")));
 
     socketServer = new SocketServer(repoRoot, ptyManager);
     socketServer.setWindow(mainWindow);
     socketServer.start();
   } else {
-    console.log("[volley] WARNING: could not detect repo root");
+    logError("could not detect repo root");
   }
 
   // Wait for renderer to signal it's ready, then sync
   // Use .on (not .once) so page reloads (Cmd+R) re-sync sessions
   ipcMain.on("renderer:ready", () => {
-    console.log("[volley] renderer ready, syncing sessions...");
+    log("renderer ready, syncing sessions...");
     // Clear known sessions so all get re-sent to the fresh renderer
     knownSessions.clear();
     syncSessions();
@@ -516,21 +519,26 @@ app.whenReady().then(() => {
 
     const args = ["start", task];
     if (baseBranch) args.push("--base", baseBranch);
+    log("session:start CLI args:", args, "cwd:", repoRoot);
     const child = spawnCli(args, repoRoot);
 
     child.stdout?.on("data", (chunk: Buffer) => {
       mainWindow?.webContents.send("session:setup-output", { pendingId, data: chunk.toString() });
     });
     child.stderr?.on("data", (chunk: Buffer) => {
-      mainWindow?.webContents.send("session:setup-output", { pendingId, data: chunk.toString() });
+      const text = chunk.toString();
+      log("session:start stderr:", text.trimEnd());
+      mainWindow?.webContents.send("session:setup-output", { pendingId, data: text });
     });
 
     child.on("error", (err) => {
+      logError("session:start spawn error:", err.message);
       pendingTasks.delete(pendingId);
       mainWindow?.webContents.send("session:setup-failed", { pendingId, error: err.message });
     });
 
     child.on("exit", (code) => {
+      log("session:start exited with code", code);
       if (code !== 0) {
         pendingTasks.delete(pendingId);
         mainWindow?.webContents.send("session:setup-failed", { pendingId, error: `volley start exited with code ${code}` });
@@ -543,6 +551,16 @@ app.whenReady().then(() => {
   });
 
   // ── Config handlers ───────────────────────────────────────────────────
+
+  ipcMain.handle("config:get-log-path", () => {
+    return { path: getLogFilePath() };
+  });
+
+  ipcMain.handle("config:open-log-file", async () => {
+    const logPath = getLogFilePath();
+    await shell.openPath(logPath);
+    return { ok: true };
+  });
 
   ipcMain.handle("config:get-start", () => {
     if (!repoRoot) return { command: null };
@@ -647,21 +665,26 @@ app.whenReady().then(() => {
 
     const args = ["start", sessionId];
     if (baseBranch) args.push("--base", baseBranch);
+    log("session:start-todo CLI args:", args, "cwd:", repoRoot);
     const child = spawnCli(args, repoRoot);
 
     child.stdout?.on("data", (chunk: Buffer) => {
       mainWindow?.webContents.send("session:setup-output", { pendingId, data: chunk.toString() });
     });
     child.stderr?.on("data", (chunk: Buffer) => {
-      mainWindow?.webContents.send("session:setup-output", { pendingId, data: chunk.toString() });
+      const text = chunk.toString();
+      log("session:start-todo stderr:", text.trimEnd());
+      mainWindow?.webContents.send("session:setup-output", { pendingId, data: text });
     });
 
     child.on("error", (err) => {
+      logError("session:start-todo spawn error:", err.message);
       pendingTasks.delete(pendingId);
       mainWindow?.webContents.send("session:setup-failed", { pendingId, error: err.message });
     });
 
     child.on("exit", (code) => {
+      log("session:start-todo exited with code", code);
       if (code !== 0) {
         pendingTasks.delete(pendingId);
         mainWindow?.webContents.send("session:setup-failed", { pendingId, error: `volley start exited with code ${code}` });

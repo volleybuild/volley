@@ -3,6 +3,7 @@ import * as fs from "node:fs";
 import * as crypto from "node:crypto";
 import type { BrowserWindow } from "electron";
 import type { PtyManager } from "./pty-manager";
+import { log, logError } from "./logger";
 
 export interface SocketMessage {
   action: "open" | "close" | "ping";
@@ -79,11 +80,11 @@ export class SocketServer {
     });
 
     this.server.listen(this.socketPath, () => {
-      // Socket server listening
+      log("socket server listening on", this.socketPath);
     });
 
     this.server.on("error", (err) => {
-      console.error("Socket server error:", err);
+      logError("socket server error:", err);
     });
   }
 
@@ -124,6 +125,7 @@ export class SocketServer {
   }
 
   stop(): void {
+    log("socket server stopping, removing", this.socketPath);
     this.server?.close();
     if (fs.existsSync(this.socketPath)) {
       fs.unlinkSync(this.socketPath);
