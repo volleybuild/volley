@@ -32,15 +32,22 @@ interface UiStore {
   rightPaneWidth: number;
   sidebarWidth: number;
   sidebarSections: {
+    notes: boolean;
+    archivedNotes: boolean;
     todo: boolean;
     inProgress: boolean;
     completed: boolean;
   };
   switchProjectModalOpen: boolean;
   switchProjectTargetId: string | null;
+  todoModalOpen: boolean;
+  todoFilterType: "all" | "bug" | "feature" | "improvement";
+  todoViewMode: "list" | "type";
+  collapsedFolders: Set<string>;
+  planningEnabled: boolean;
 
   setFileTreeBasePath: (basePath: string) => void;
-  toggleSidebarSection: (section: "todo" | "inProgress" | "completed") => void;
+  toggleSidebarSection: (section: "notes" | "archivedNotes" | "todo" | "inProgress" | "completed") => void;
   setRightPaneWidth: (width: number) => void;
   setSidebarWidth: (width: number) => void;
   openFileViewer: (path: string, content: string, size: string) => void;
@@ -64,6 +71,12 @@ interface UiStore {
   closeSettings: () => void;
   openSwitchProjectModal: (projectId: string) => void;
   closeSwitchProjectModal: () => void;
+  openTodoModal: () => void;
+  closeTodoModal: () => void;
+  setTodoFilterType: (type: "all" | "bug" | "feature" | "improvement") => void;
+  setTodoViewMode: (mode: "list" | "type") => void;
+  toggleFolder: (folderId: string) => void;
+  setPlanningEnabled: (enabled: boolean) => void;
 }
 
 function createUiStore() {
@@ -95,9 +108,16 @@ function createUiStore() {
   settingsOpen: false,
   switchProjectModalOpen: false,
   switchProjectTargetId: null,
+  todoModalOpen: false,
+  todoFilterType: "all" as const,
+  todoViewMode: "list" as const,
+  collapsedFolders: new Set<string>(),
+  planningEnabled: false,
   rightPaneWidth: 450,
-  sidebarWidth: 224,
+  sidebarWidth: 260,
   sidebarSections: {
+    notes: true,
+    archivedNotes: false,
     todo: true,
     inProgress: true,
     completed: false,
@@ -159,6 +179,17 @@ function createUiStore() {
   closeSettings: () => set({ settingsOpen: false }),
   openSwitchProjectModal: (projectId) => set({ switchProjectModalOpen: true, switchProjectTargetId: projectId }),
   closeSwitchProjectModal: () => set({ switchProjectModalOpen: false, switchProjectTargetId: null }),
+  openTodoModal: () => set({ todoModalOpen: true }),
+  closeTodoModal: () => set({ todoModalOpen: false }),
+  setTodoFilterType: (type) => set({ todoFilterType: type }),
+  setTodoViewMode: (mode) => set({ todoViewMode: mode }),
+  toggleFolder: (folderId) => set((state) => {
+    const next = new Set(state.collapsedFolders);
+    if (next.has(folderId)) next.delete(folderId);
+    else next.add(folderId);
+    return { collapsedFolders: next };
+  }),
+  setPlanningEnabled: (enabled) => set({ planningEnabled: enabled }),
 }));
 }
 

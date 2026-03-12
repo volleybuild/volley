@@ -4,14 +4,19 @@ import type { VolleyState, Session } from "./types.js";
 import { getRepoRoot } from "./utils/git.js";
 import { getWorktreeDir, getStatePath, ensureDir } from "./utils/paths.js";
 
-/** Migrate sessions to include lifecycle field */
+/** Migrate sessions to include lifecycle field and todo metadata */
 function migrateState(state: VolleyState): VolleyState {
   for (const session of state.sessions) {
     // Existing sessions without lifecycle field are "in_progress"
     if (!(session as Session).lifecycle) {
       (session as Session).lifecycle = "in_progress";
     }
+    // Default existing todos without todoType to "feature"
+    if (session.lifecycle === "todo" && !session.todoType) {
+      session.todoType = "feature";
+    }
   }
+  if (!state.todoFolders) state.todoFolders = [];
   return state;
 }
 

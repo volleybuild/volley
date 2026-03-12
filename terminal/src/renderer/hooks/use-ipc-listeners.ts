@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useSessionStore } from "../store/session-store";
 import { useProjectStore } from "../store/project-store";
 import { useUiStore } from "../store/ui-store";
+import { useNoteStore } from "../store/note-store";
 
 let setupWarningShown = false;
 
@@ -10,11 +11,30 @@ export function useIpcListeners() {
     // Fetch start command from config on init
     useSessionStore.getState().fetchStartCommand();
 
+    // Load notes
+    useNoteStore.getState().fetchNotes();
+
+    // Load todo folders
+    useSessionStore.getState().fetchTodoFolders();
+
+    // Load planning enabled setting
+    window.volley.settings.getUser().then((settings: any) => {
+      useUiStore.getState().setPlanningEnabled(!!settings.planning?.enabled);
+    });
+
+    // Listen for planning status changes
+    window.volley.planning.onStatusChanged(({ sessionId, planStatus, planMarkdown, error }) => {
+      useSessionStore.getState().updatePlanStatus(sessionId, planStatus, planMarkdown, error);
+    });
+
     // Listen for project switches
     window.volley.project.onSwitched(() => {
       useSessionStore.getState().clearAllSessions();
       useSessionStore.getState().fetchStartCommand();
       useProjectStore.getState().fetchProjects();
+      useNoteStore.getState().clearNotes();
+      useNoteStore.getState().fetchNotes();
+      useSessionStore.getState().fetchTodoFolders();
       setupWarningShown = false;
     });
 
