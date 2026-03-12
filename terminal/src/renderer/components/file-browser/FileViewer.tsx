@@ -12,12 +12,9 @@ export default function FileViewer() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div
-        className="flex items-center gap-2 px-3 py-1 flex-shrink-0"
-        style={{ fontSize: "11px" }}
-      >
+      <div className="flex items-center gap-2 px-3 py-1.5 flex-shrink-0 text-[12px]">
         <button
-          className="flex items-center justify-center w-6 h-6 rounded text-gray-500 hover:text-gray-300 hover:bg-white/[0.06]"
+          className="flex items-center justify-center w-6 h-6 rounded text-gray-500 hover:text-gray-300 hover:bg-white/[0.06] transition-colors cursor-pointer"
           title="Back (Esc)"
           onClick={closeFileViewer}
         >
@@ -32,9 +29,9 @@ export default function FileViewer() {
             <path d="M19 12H5m0 0l7 7m-7-7l7-7" />
           </svg>
         </button>
-        <span className="text-gray-300 truncate">{fileViewerPath}</span>
+        <span className="text-gray-300 truncate text-[13px]">{fileViewerPath}</span>
         <span className="flex-1" />
-        <span className="text-gray-600">{fileViewerSize}</span>
+        <span className="text-gray-600 text-[11px]">{fileViewerSize}</span>
       </div>
       <div className="flex-1 overflow-auto">
         <pre className="file-viewer-pre">

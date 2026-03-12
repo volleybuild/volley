@@ -124,8 +124,8 @@ export default function ProjectDropdown() {
                 }`}
               >
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium truncate">{project.name}</div>
-                  <div className="text-[10px] text-gray-600 truncate">{project.path}</div>
+                  <div className="text-[13px] font-medium truncate">{project.name}</div>
+                  <div className="text-[11px] text-gray-600 truncate">{project.path}</div>
                 </div>
                 {project.id !== activeProjectId && (
                   <button
@@ -143,9 +143,9 @@ export default function ProjectDropdown() {
           <div className="border-t border-white/[0.04]">
             <button
               onClick={handleAdd}
-              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-500 hover:text-gray-300 hover:bg-white/[0.04] cursor-pointer transition-colors border-none bg-transparent"
+              className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-500 hover:text-gray-300 hover:bg-white/[0.04] cursor-pointer transition-colors border-none bg-transparent"
             >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 5v14M5 12h14" strokeLinecap="round" />
               </svg>
               Add project...
@@ -161,12 +161,12 @@ export default function ProjectDropdown() {
       <button
         ref={triggerRef}
         onClick={() => setDropdownOpen(!dropdownOpen)}
-        className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-200 transition-colors cursor-pointer bg-transparent border-none px-1 py-0.5 rounded hover:bg-white/[0.04]"
+        className="flex items-center gap-1 text-[12px] text-gray-400 hover:text-gray-200 transition-colors cursor-pointer bg-transparent border-none px-1 py-0.5 rounded hover:bg-white/[0.04]"
       >
         <span className="truncate max-w-[120px]">{activeProject?.name ?? "No project"}</span>
         <svg
-          width="8"
-          height="8"
+          width="10"
+          height="10"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"

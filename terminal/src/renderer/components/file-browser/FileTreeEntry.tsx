@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from "react";
 import { getFileIcon } from "../../constants/file-icons";
 
-const ICON_CHEVRON_RIGHT = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg>`;
-const ICON_CHEVRON_DOWN = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>`;
-const ICON_FILE = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+const ICON_CHEVRON_RIGHT = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 6l6 6-6 6"/></svg>`;
+const ICON_CHEVRON_DOWN = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>`;
+const ICON_FILE = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
 const ICON_FOLDER = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>`;
 
 interface Entry {
@@ -21,7 +21,7 @@ interface Props {
   changedFiles?: Map<string, string>;
 }
 
-const ENTRY_BASE = "flex items-center gap-1 py-0.5 px-2 cursor-pointer select-none whitespace-nowrap hover:bg-white/[0.04]";
+const ENTRY_BASE = "flex items-center gap-1.5 py-1 px-2 cursor-pointer select-none whitespace-nowrap hover:bg-white/[0.04] text-[13px]";
 
 function changeDotColor(status: string | undefined): string {
   if (!status) return "";
@@ -62,7 +62,7 @@ export default function FileTreeEntry({ entry, basePath, depth, activeFilePath, 
           onClick={handleDirClick}
         >
           <span
-            className="flex-shrink-0 flex items-center w-2.5"
+            className="flex-shrink-0 flex items-center w-3"
             dangerouslySetInnerHTML={{
               __html: expanded ? ICON_CHEVRON_DOWN : ICON_CHEVRON_RIGHT,
             }}
@@ -72,7 +72,7 @@ export default function FileTreeEntry({ entry, basePath, depth, activeFilePath, 
           </span>
           <span className="overflow-hidden text-ellipsis">{entry.name}</span>
           {changedFiles?.has(entry.path) && (
-            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${changeDotColor(changedFiles.get(entry.path))}`} />
+            <span className={`w-[7px] h-[7px] rounded-full flex-shrink-0 ${changeDotColor(changedFiles.get(entry.path))}`} />
           )}
         </div>
         {expanded && children && (
@@ -104,7 +104,7 @@ export default function FileTreeEntry({ entry, basePath, depth, activeFilePath, 
       onClick={handleFileClick}
     >
       <span
-        className="flex-shrink-0 flex items-center w-2.5"
+        className="flex-shrink-0 flex items-center w-3"
         style={{ visibility: "hidden" }}
         dangerouslySetInnerHTML={{ __html: ICON_CHEVRON_RIGHT }}
       />
@@ -113,7 +113,7 @@ export default function FileTreeEntry({ entry, basePath, depth, activeFilePath, 
       </span>
       <span className="overflow-hidden text-ellipsis">{entry.name}</span>
       {changeStatus && (
-        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${changeDotColor(changeStatus)}`} />
+        <span className={`w-[7px] h-[7px] rounded-full flex-shrink-0 ${changeDotColor(changeStatus)}`} />
       )}
     </div>
   );

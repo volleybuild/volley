@@ -51,17 +51,19 @@ export default function DiffViewerPane() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="flex items-center gap-2 px-2 py-1 flex-shrink-0 border-b border-white/[0.06]">
+      <div className="flex items-center gap-2 px-3 py-1.5 flex-shrink-0 border-b border-white/[0.06]">
         <button
-          className="text-[10px] text-gray-600 hover:text-gray-300 cursor-pointer"
+          className="flex items-center justify-center w-6 h-6 rounded text-gray-500 hover:text-gray-300 hover:bg-white/[0.06] transition-colors cursor-pointer"
           onClick={closeDiff}
           title="Back to changes"
         >
-          ← Back
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M19 12H5m0 0l7 7m-7-7l7-7" />
+          </svg>
         </button>
-        <span className="text-[10px] text-gray-400 truncate">{diffFilePath}</span>
+        <span className="text-[13px] text-gray-300 truncate">{diffFilePath}</span>
         {diffStaged && (
-          <span className="text-[9px] text-accent-bright/60 bg-accent-bright/10 rounded px-1">staged</span>
+          <span className="text-[10px] text-accent-bright/60 bg-accent-bright/10 rounded px-1.5 py-0.5">staged</span>
         )}
       </div>
       <div
@@ -69,7 +71,7 @@ export default function DiffViewerPane() {
         className="flex-1 overflow-y-auto diff-viewer"
       >
         {loading ? (
-          <div className="flex items-center justify-center h-full text-gray-600 text-xs">Loading diff...</div>
+          <div className="flex items-center justify-center h-full text-gray-600 text-[13px]">Loading diff...</div>
         ) : (
           <div dangerouslySetInnerHTML={{ __html: diffHtml }} />
         )}

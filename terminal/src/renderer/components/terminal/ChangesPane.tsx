@@ -99,26 +99,30 @@ export default function ChangesPane() {
   const totalChanges = staged.length + unstaged.length;
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden text-xs">
+    <div className="flex-1 flex flex-col overflow-hidden">
       {loading && totalChanges === 0 ? (
-        <div className="flex-1 flex items-center justify-center text-gray-600">Loading...</div>
+        <div className="flex-1 flex items-center justify-center text-gray-600 text-[13px]">Loading...</div>
       ) : totalChanges === 0 ? (
-        <div className="flex-1 flex items-center justify-center text-gray-600">No changes</div>
+        <div className="flex-1 flex items-center justify-center text-gray-600 text-[13px]">No changes</div>
       ) : (
         <div className="flex-1 overflow-y-auto">
           {/* Staged section */}
           <div>
             <div
-              className="flex items-center gap-1.5 px-2 py-1 bg-white/[0.02] cursor-pointer select-none hover:bg-white/[0.04]"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.02] cursor-pointer select-none hover:bg-white/[0.04]"
               onClick={() => setStagedOpen(!stagedOpen)}
             >
-              <span className="text-[10px] text-gray-600 w-2.5">{stagedOpen ? "▾" : "▸"}</span>
-              <span className="text-gray-400 font-medium">Staged</span>
-              <span className="text-gray-600">({staged.length})</span>
+              <span className="flex-shrink-0 flex items-center w-3 text-gray-600">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={`transition-transform ${stagedOpen ? "rotate-90" : ""}`}>
+                  <path d="M9 6l6 6-6 6" />
+                </svg>
+              </span>
+              <span className="text-[13px] text-gray-400 font-medium">Staged</span>
+              <span className="text-[11px] text-gray-600">({staged.length})</span>
               <span className="flex-1" />
               {staged.length > 0 && (
                 <button
-                  className="text-[10px] text-gray-600 hover:text-gray-300 px-1"
+                  className="text-[11px] text-gray-600 hover:text-gray-300 px-1 cursor-pointer transition-colors"
                   onClick={(e) => { e.stopPropagation(); handleUnstage(staged.map(f => f.path)); }}
                 >
                   Unstage All
@@ -141,16 +145,20 @@ export default function ChangesPane() {
           {/* Unstaged section */}
           <div>
             <div
-              className="flex items-center gap-1.5 px-2 py-1 bg-white/[0.02] cursor-pointer select-none hover:bg-white/[0.04]"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.02] cursor-pointer select-none hover:bg-white/[0.04]"
               onClick={() => setUnstagedOpen(!unstagedOpen)}
             >
-              <span className="text-[10px] text-gray-600 w-2.5">{unstagedOpen ? "▾" : "▸"}</span>
-              <span className="text-gray-400 font-medium">Unstaged</span>
-              <span className="text-gray-600">({unstaged.length})</span>
+              <span className="flex-shrink-0 flex items-center w-3 text-gray-600">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={`transition-transform ${unstagedOpen ? "rotate-90" : ""}`}>
+                  <path d="M9 6l6 6-6 6" />
+                </svg>
+              </span>
+              <span className="text-[13px] text-gray-400 font-medium">Unstaged</span>
+              <span className="text-[11px] text-gray-600">({unstaged.length})</span>
               <span className="flex-1" />
               {unstaged.length > 0 && (
                 <button
-                  className="text-[10px] text-gray-600 hover:text-gray-300 px-1"
+                  className="text-[11px] text-gray-600 hover:text-gray-300 px-1 cursor-pointer transition-colors"
                   onClick={(e) => { e.stopPropagation(); handleStage(unstaged.map(f => f.path)); }}
                 >
                   Stage All
@@ -181,7 +189,7 @@ export default function ChangesPane() {
             placeholder="Commit message..."
             value={commitMsg}
             onChange={(e) => setCommitMsg(e.target.value)}
-            className="w-full bg-vo-base border border-vo-border rounded px-2 py-1 text-xs text-vo-text outline-none focus:border-accent/50 mb-1.5"
+            className="w-full bg-vo-base border border-vo-border rounded px-2 py-1.5 text-[13px] text-vo-text outline-none focus:border-accent/50 mb-1.5"
             autoComplete="off"
             spellCheck={false}
             onKeyDown={(e) => {
@@ -192,7 +200,7 @@ export default function ChangesPane() {
             }}
           />
           <button
-            className={`w-full text-[10px] font-medium rounded py-1 transition-colors ${
+            className={`w-full text-[11px] font-medium rounded py-1.5 transition-colors ${
               commitMsg.trim()
                 ? "bg-accent-bright text-vo-base hover:bg-accent cursor-pointer"
                 : "bg-white/[0.06] text-gray-600 cursor-default"
@@ -217,10 +225,10 @@ function FileRow({ file, isStaged, onStage, onUnstage, onDiscard, onViewDiff }: 
   onViewDiff: () => void;
 }) {
   return (
-    <div className="group flex items-center gap-1.5 px-3 py-0.5 hover:bg-white/[0.04]">
-      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusColor(file.status)}`} title={statusLabel(file.status)} />
+    <div className="group flex items-center gap-1.5 px-3 py-1 hover:bg-white/[0.04]">
+      <span className={`w-[7px] h-[7px] rounded-full flex-shrink-0 ${statusColor(file.status)}`} title={statusLabel(file.status)} />
       <span
-        className="text-gray-400 truncate flex-1 cursor-pointer hover:text-gray-200"
+        className="text-[13px] text-gray-400 truncate flex-1 cursor-pointer hover:text-gray-200"
         onClick={onViewDiff}
         title={file.path}
       >
@@ -229,36 +237,36 @@ function FileRow({ file, isStaged, onStage, onUnstage, onDiscard, onViewDiff }: 
       <span className="hidden group-hover:flex items-center gap-0.5 flex-shrink-0">
         {isStaged ? (
           <button
-            className="text-[9px] text-gray-600 hover:text-yellow-400 px-1"
+            className="w-5 h-5 flex items-center justify-center rounded text-gray-500 hover:text-yellow-400 hover:bg-white/[0.08] transition-colors cursor-pointer"
             onClick={onUnstage}
             title="Unstage"
           >
-            −
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14" /></svg>
           </button>
         ) : (
           <>
             <button
-              className="text-[9px] text-gray-600 hover:text-accent-bright px-1"
+              className="w-5 h-5 flex items-center justify-center rounded text-gray-500 hover:text-accent-bright hover:bg-white/[0.08] transition-colors cursor-pointer"
               onClick={onStage}
               title="Stage"
             >
-              +
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
             </button>
             <button
-              className="text-[9px] text-gray-600 hover:text-red-400 px-1"
+              className="w-5 h-5 flex items-center justify-center rounded text-gray-500 hover:text-red-400 hover:bg-red-500/15 transition-colors cursor-pointer"
               onClick={onDiscard}
               title="Discard"
             >
-              ×
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
             </button>
           </>
         )}
         <button
-          className="text-[9px] text-gray-600 hover:text-accent-cyan px-1"
+          className="w-5 h-5 flex items-center justify-center rounded text-gray-500 hover:text-accent-cyan hover:bg-white/[0.08] transition-colors cursor-pointer"
           onClick={onViewDiff}
           title="View Diff"
         >
-          ◈
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v18M3 12h18" strokeDasharray="2 4" /></svg>
         </button>
       </span>
     </div>
