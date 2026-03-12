@@ -18,9 +18,17 @@ interface Props {
   session: SessionState;
   isActive: boolean;
   onClick: () => void;
+  onDelete?: () => void;
+  draggable?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent) => void;
+  onDragEnd?: (e: React.DragEvent) => void;
+  isDragOver?: boolean;
+  indented?: boolean;
 }
 
-export default function TabItem({ session, isActive, onClick }: Props) {
+export default function TabItem({ session, isActive, onClick, onDelete, draggable, onDragStart, onDragOver, onDrop, onDragEnd, isDragOver, indented }: Props) {
   const now = Date.now();
   const [stat, setStat] = useState<LineStat | null>(null);
   const isPending = session.status === "pending";
@@ -49,12 +57,22 @@ export default function TabItem({ session, isActive, onClick }: Props) {
     window.volley.session.startTodo(session.id);
   };
 
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete?.();
+  };
+
   return (
     <div
-      className={`flex items-start gap-2 px-2.5 py-2 cursor-pointer hover:bg-white/[0.03] rounded text-xs titlebar-no-drag transition-colors duration-75 relative ${
+      className={`group flex items-start gap-2 px-2.5 py-2 cursor-pointer hover:bg-white/[0.03] rounded text-xs titlebar-no-drag transition-colors duration-75 relative ${
         isActive ? "bg-white/[0.03]" : ""
-      } ${isCompleted ? "opacity-60" : ""}`}
+      } ${isCompleted ? "opacity-60" : ""} ${isDragOver ? "border-t border-accent-bright/50" : "border-t border-transparent"} ${indented ? "pl-4" : ""}`}
       onClick={onClick}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
     >
       {isActive && (
         <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 rounded-r ${
@@ -62,9 +80,33 @@ export default function TabItem({ session, isActive, onClick }: Props) {
         }`} />
       )}
 
-      {/* Status indicator */}
+      {/* Status indicator — for todos, the dot becomes an X on hover */}
       {isTodo ? (
-        <span className="mt-[5px] w-[7px] h-[7px] rounded-full border border-gray-500 flex-shrink-0" />
+        onDelete ? (
+          <>
+            <span className={`mt-[5px] w-[7px] h-[7px] rounded-full flex-shrink-0 group-hover:hidden ${
+              session.todoType === "bug" ? "bg-red-400" :
+              session.todoType === "improvement" ? "bg-blue-400" :
+              "bg-accent-bright"
+            }`} />
+            <button
+              className="hidden group-hover:flex items-center justify-center w-[11px] h-[11px] mt-[3px] flex-shrink-0 rounded-sm hover:bg-red-500/15 text-gray-500 hover:text-red-400 transition-colors"
+              onClick={handleDelete}
+              title="Delete todo"
+            >
+              <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </>
+        ) : (
+          <span className={`mt-[5px] w-[7px] h-[7px] rounded-full flex-shrink-0 ${
+            session.todoType === "bug" ? "bg-red-400" :
+            session.todoType === "improvement" ? "bg-blue-400" :
+            "bg-accent-bright"
+          }`} />
+        )
       ) : isCompleted ? (
         <span className="mt-[4px] w-[9px] h-[9px] rounded-full bg-green-500/30 flex-shrink-0 flex items-center justify-center text-green-400">
           <span dangerouslySetInnerHTML={{ __html: ICON_CHECK }} />
@@ -96,14 +138,27 @@ export default function TabItem({ session, isActive, onClick }: Props) {
 
           {/* Right side badge/info */}
           {isTodo ? (
-            <button
-              className="flex-shrink-0 px-1.5 py-0.5 rounded text-[9px] bg-accent/10 text-accent hover:bg-accent/20 transition-colors flex items-center gap-1"
-              onClick={handleStartTodo}
-              title="Start session"
-            >
-              <span dangerouslySetInnerHTML={{ __html: ICON_PLAY }} />
-              Start
-            </button>
+            <span className="flex items-center gap-0.5 flex-shrink-0">
+              {session.planStatus === "pending" && (
+                <span className="text-[10px] text-gray-500" title="Plan pending">&#x25CC;</span>
+              )}
+              {session.planStatus === "planning" && (
+                <span className="text-[10px] text-accent-bright animate-pulse" title="Planning...">&#x25D1;</span>
+              )}
+              {session.planStatus === "ready" && (
+                <span className="text-[10px] text-green-400" title="Plan ready">&#x25CF;</span>
+              )}
+              {session.planStatus === "failed" && (
+                <span className="text-[10px] text-red-400" title="Plan failed">&#x2715;</span>
+              )}
+              <button
+                className="p-0.5 rounded text-accent hover:bg-accent/20 transition-colors flex items-center justify-center"
+                onClick={handleStartTodo}
+                title="Start session"
+              >
+                <span dangerouslySetInnerHTML={{ __html: ICON_PLAY }} />
+              </button>
+            </span>
           ) : isCompleted ? (
             <span className="text-[10px] text-gray-600 flex-shrink-0">
               {session.completedAt ? formatElapsed(now - session.completedAt) : ""}

@@ -1,9 +1,127 @@
-import React, { useRef, useCallback } from "react";
+import React, { useRef, useCallback, useState, useEffect, useLayoutEffect } from "react";
 import { useSessionStore } from "../../store/session-store";
 import { useUiStore } from "../../store/ui-store";
+import { useNoteStore } from "../../store/note-store";
 import TabItem from "../sidebar/TabItem";
+import NoteItem from "../sidebar/NoteItem";
 import SidebarSection from "../sidebar/SidebarSection";
+import SidebarFolder from "../sidebar/SidebarFolder";
+import TypeGroup from "../sidebar/TypeGroup";
 import ProjectDropdown from "../sidebar/ProjectDropdown";
+import type { SessionState, TodoType } from "../../store/types";
+
+const FILTER_OPTIONS = [
+  { value: "all" as const, label: "All" },
+  { value: "bug" as const, label: "Bug", color: "text-red-400" },
+  { value: "feature" as const, label: "Feature", color: "text-accent-bright" },
+  { value: "improvement" as const, label: "Improvement", color: "text-blue-400" },
+];
+
+function TodoFilterPopover({
+  open,
+  activeFilter,
+  onSelect,
+  onClose,
+}: {
+  open: boolean;
+  activeFilter: string;
+  onSelect: (type: "all" | "bug" | "feature" | "improvement") => void;
+  onClose: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <>
+      <div className="fixed inset-0 z-30" onClick={onClose} />
+      <div className="absolute right-0 top-full mt-1 z-40 bg-[#0f0f12] border border-white/[0.08] rounded-lg shadow-xl py-1 min-w-[120px]">
+        {FILTER_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(opt.value);
+              onClose();
+            }}
+            className={`w-full text-left px-3 py-1.5 text-[11px] transition-colors cursor-pointer flex items-center gap-2 ${
+              activeFilter === opt.value
+                ? "bg-white/[0.06] text-white"
+                : "text-gray-400 hover:bg-white/[0.04] hover:text-gray-200"
+            }`}
+          >
+            {opt.value !== "all" && (
+              <span className={`w-2 h-2 rounded-full ${
+                opt.value === "bug" ? "bg-red-400" :
+                opt.value === "feature" ? "bg-accent-bright" :
+                "bg-blue-400"
+              }`} />
+            )}
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function FolderCreateInput({
+  onCommit,
+  onDiscard,
+}: {
+  onCommit: (name: string) => void;
+  onDiscard: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [value, setValue] = useState("");
+
+  useLayoutEffect(() => {
+    // Focus on next frame so the DOM has rendered
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, []);
+
+  const commit = () => {
+    const trimmed = value.trim();
+    if (trimmed) {
+      onCommit(trimmed);
+    } else {
+      onDiscard();
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1 px-2 py-1 mb-0.5">
+      {/* Folder icon */}
+      <svg
+        width="11"
+        height="11"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="flex-shrink-0 text-gray-500"
+      >
+        <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+      </svg>
+      <input
+        ref={inputRef}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          }
+          if (e.key === "Escape") {
+            e.preventDefault();
+            onDiscard();
+          }
+        }}
+        placeholder="Folder name"
+        className="flex-1 min-w-0 bg-transparent border border-accent-bright/40 rounded px-1.5 py-0.5 text-[10px] text-gray-300 outline-none placeholder:text-gray-600"
+      />
+    </div>
+  );
+}
 
 export default function Sidebar() {
   const sessions = useSessionStore((s) => s.sessions);
@@ -11,31 +129,61 @@ export default function Sidebar() {
   const focusSession = useSessionStore((s) => s.focusSession);
   const gridMode = useSessionStore((s) => s.gridMode);
   const toggleGridMode = useSessionStore((s) => s.toggleGridMode);
+  const todoFolders = useSessionStore((s) => s.todoFolders);
+  const fetchTodoFolders = useSessionStore((s) => s.fetchTodoFolders);
+  const createTodoFolder = useSessionStore((s) => s.createTodoFolder);
+  const renameTodoFolder = useSessionStore((s) => s.renameTodoFolder);
+  const deleteTodoFolder = useSessionStore((s) => s.deleteTodoFolder);
+  const moveSessionToFolder = useSessionStore((s) => s.moveSessionToFolder);
   const openNewSessionModal = useUiStore((s) => s.openNewSessionModal);
+  const openTodoModal = useUiStore((s) => s.openTodoModal);
   const sidebarWidth = useUiStore((s) => s.sidebarWidth);
   const setSidebarWidth = useUiStore((s) => s.setSidebarWidth);
   const sidebarSections = useUiStore((s) => s.sidebarSections);
   const toggleSidebarSection = useUiStore((s) => s.toggleSidebarSection);
+  const todoFilterType = useUiStore((s) => s.todoFilterType);
+  const setTodoFilterType = useUiStore((s) => s.setTodoFilterType);
+  const todoViewMode = useUiStore((s) => s.todoViewMode);
+  const setTodoViewMode = useUiStore((s) => s.setTodoViewMode);
+  const collapsedFolders = useUiStore((s) => s.collapsedFolders);
+  const toggleFolder = useUiStore((s) => s.toggleFolder);
+  const planningEnabled = useUiStore((s) => s.planningEnabled);
   const addToast = useUiStore((s) => s.addToast);
+
+  const notes = useNoteStore((s) => s.notes);
+  const noteFolders = useNoteStore((s) => s.folders);
+  const activeNoteId = useNoteStore((s) => s.activeNoteId);
+  const setActiveNote = useNoteStore((s) => s.setActiveNote);
+  const createNote = useNoteStore((s) => s.createNote);
+  const deleteNote = useNoteStore((s) => s.deleteNote);
+  const archiveNote = useNoteStore((s) => s.archiveNote);
+  const createNoteFolder = useNoteStore((s) => s.createFolder);
+  const renameNoteFolder = useNoteStore((s) => s.renameFolder);
+  const deleteNoteFolder = useNoteStore((s) => s.deleteFolder);
+  const moveNoteToFolder = useNoteStore((s) => s.moveNoteToFolder);
+  const removeSession = useSessionStore((s) => s.removeSession);
+
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [dragSection, setDragSection] = useState<string | null>(null);
+  const [creatingNoteFolder, setCreatingNoteFolder] = useState(false);
+  const [creatingTodoFolder, setCreatingTodoFolder] = useState(false);
+
+  // Fetch folders on mount
+  useEffect(() => {
+    fetchTodoFolders();
+  }, [fetchTodoFolders]);
 
   // Group sessions by lifecycle
   const sessionArray = Array.from(sessions.values());
-  const todoSessions = sessionArray.filter((s) => s.lifecycle === "todo");
+  const allTodoSessions = sessionArray.filter((s) => s.lifecycle === "todo");
+  const todoSessions = todoFilterType === "all"
+    ? allTodoSessions
+    : allTodoSessions.filter((s) => (s.todoType || "feature") === todoFilterType);
   const inProgressSessions = sessionArray.filter(
     (s) => s.lifecycle === "in_progress" || (!s.lifecycle && s.status !== "exited")
   );
   const completedSessions = sessionArray.filter((s) => s.lifecycle === "completed");
-
-  const handleAddTodo = async (task: string) => {
-    try {
-      const result = await window.volley.session.createTodo(task);
-      if (!result.ok) {
-        addToast(result.error || "Failed to create todo", "error");
-      }
-    } catch (e: any) {
-      addToast(e.message || "Failed to create todo", "error");
-    }
-  };
 
   const isDragging = useRef(false);
 
@@ -61,6 +209,240 @@ export default function Sidebar() {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   }, [setSidebarWidth]);
+
+  const activeNotes = notes.filter((n) => n.status === "active");
+  const archivedNotes = notes.filter((n) => n.status === "archived");
+
+  const handleNoteClick = (noteId: string) => {
+    useSessionStore.setState({ activeSessionId: null });
+    setActiveNote(noteId);
+    useUiStore.getState().closeSettings();
+    useUiStore.getState().closeFileViewer();
+  };
+
+  const handleSessionClick = (sessionId: string) => {
+    focusSession(sessionId);
+    setActiveNote(null);
+  };
+
+  const handleCreateNote = async () => {
+    const note = await createNote("Untitled");
+    if (note) {
+      useSessionStore.setState({ activeSessionId: null });
+      useUiStore.getState().closeSettings();
+      useUiStore.getState().closeFileViewer();
+    }
+  };
+
+  const handleDeleteTodo = async (sessionId: string) => {
+    await window.volley.session.delete(sessionId);
+    removeSession(sessionId);
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    await deleteNote(noteId);
+  };
+
+  const handleArchiveNote = async (noteId: string) => {
+    await archiveNote(noteId);
+  };
+
+  // ── Drag-and-drop helpers (drag source only — drops handled by folders/root zones) ──
+  const makeDragHandlers = (section: string, id: string, folderId?: string | null) => ({
+    onDragStart: (e: React.DragEvent) => {
+      e.dataTransfer.setData("text/plain", JSON.stringify({ id, section, folderId: folderId ?? null }));
+      e.dataTransfer.effectAllowed = "move";
+      setDragSection(section);
+    },
+    onDragEnd: () => {
+      setDragOverId(null);
+      setDragSection(null);
+    },
+  });
+
+  const hasPendingPlans = allTodoSessions.some(s => s.planStatus === "pending");
+
+  const handlePlanAll = async () => {
+    const result = await window.volley.planning.planAll();
+    if (!result.ok) {
+      addToast(result.error || "Failed to start planning", "error");
+    }
+  };
+
+  // ── Notes section: group by folder ─────────────────────────────────────
+  const alphaNote = (a: NoteData, b: NoteData) => (a.title || "").localeCompare(b.title || "");
+  const ungroupedNotes = activeNotes.filter((n) => !n.folderId).sort(alphaNote);
+  const notesByFolder = new Map<string, NoteData[]>();
+  for (const note of activeNotes) {
+    if (note.folderId) {
+      const list = notesByFolder.get(note.folderId) ?? [];
+      list.push(note);
+      notesByFolder.set(note.folderId, list);
+    }
+  }
+  for (const [key, list] of notesByFolder) notesByFolder.set(key, list.sort(alphaNote));
+  const sortedNoteFolders = [...noteFolders].sort((a, b) => a.name.localeCompare(b.name));
+
+  // ── Todo section: group by folder (list mode) or type ──────────────────
+  const alphaTodo = (a: SessionState, b: SessionState) => a.task.localeCompare(b.task);
+  const ungroupedTodos = todoSessions.filter((s) => !s.folderId).sort(alphaTodo);
+  const todosByFolder = new Map<string, SessionState[]>();
+  for (const session of todoSessions) {
+    if (session.folderId) {
+      const list = todosByFolder.get(session.folderId) ?? [];
+      list.push(session);
+      todosByFolder.set(session.folderId, list);
+    }
+  }
+  for (const [key, list] of todosByFolder) todosByFolder.set(key, list.sort(alphaTodo));
+  const sortedTodoFolders = [...todoFolders].sort((a, b) => a.name.localeCompare(b.name));
+
+  // Type grouping
+  const todosByType = new Map<TodoType, SessionState[]>();
+  if (todoViewMode === "type") {
+    for (const session of allTodoSessions) {
+      const type = session.todoType || "feature";
+      const list = todosByType.get(type) ?? [];
+      list.push(session);
+      todosByType.set(type, list);
+    }
+    for (const [key, list] of todosByType) todosByType.set(key, list.sort(alphaTodo));
+  }
+  const typeOrder: TodoType[] = ["bug", "feature", "improvement"];
+
+  // ── Folder create helpers ──────────────────────────────────────────────
+  const handleCreateNoteFolder = () => {
+    // Ensure section is expanded so the input is visible
+    if (!sidebarSections.notes) toggleSidebarSection("notes");
+    setCreatingNoteFolder(true);
+  };
+
+  const handleCreateTodoFolder = () => {
+    if (!sidebarSections.todo) toggleSidebarSection("todo");
+    setCreatingTodoFolder(true);
+  };
+
+  // ── View mode toggle + filter button ───────────────────────────────────
+  const viewModeToggle = (
+    <button
+      className={`p-0.5 rounded hover:bg-white/[0.08] transition-colors ${
+        todoViewMode === "type" ? "opacity-100 text-accent-bright" : "opacity-50 hover:opacity-100"
+      }`}
+      onClick={(e) => {
+        e.stopPropagation();
+        setTodoViewMode(todoViewMode === "list" ? "type" : "list");
+      }}
+      title={todoViewMode === "list" ? "Group by type" : "List view"}
+    >
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        {todoViewMode === "list" ? (
+          // Stack/group icon
+          <>
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </>
+        ) : (
+          // List icon
+          <>
+            <line x1="8" y1="6" x2="21" y2="6" />
+            <line x1="8" y1="12" x2="21" y2="12" />
+            <line x1="8" y1="18" x2="21" y2="18" />
+            <line x1="3" y1="6" x2="3.01" y2="6" />
+            <line x1="3" y1="12" x2="3.01" y2="12" />
+            <line x1="3" y1="18" x2="3.01" y2="18" />
+          </>
+        )}
+      </svg>
+    </button>
+  );
+
+  const filterButton = (
+    <div className="relative flex items-center gap-1">
+      {planningEnabled && hasPendingPlans && (
+        <button
+          className="p-0.5 rounded hover:bg-white/[0.08] transition-colors opacity-50 hover:opacity-100 text-blue-400"
+          onClick={(e) => {
+            e.stopPropagation();
+            handlePlanAll();
+          }}
+          title="Plan all pending todos"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+        </button>
+      )}
+      {viewModeToggle}
+      {todoViewMode === "list" && (
+        <button
+          className={`p-0.5 rounded hover:bg-white/[0.08] transition-colors ${
+            todoFilterType !== "all" ? "opacity-100 text-accent-bright" : "opacity-50 hover:opacity-100"
+          }`}
+          onClick={(e) => {
+            e.stopPropagation();
+            setFilterOpen(!filterOpen);
+          }}
+          title="Filter by type"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+          </svg>
+        </button>
+      )}
+      <TodoFilterPopover
+        open={filterOpen}
+        activeFilter={todoFilterType}
+        onSelect={setTodoFilterType}
+        onClose={() => setFilterOpen(false)}
+      />
+    </div>
+  );
+
+  // ── Notes extra actions (folder icon + add note) ──────────────────────
+  const notesFolderButton = (
+    <button
+      className="p-0.5 rounded hover:bg-white/[0.08] transition-colors opacity-50 hover:opacity-100"
+      onClick={(e) => {
+        e.stopPropagation();
+        handleCreateNoteFolder();
+      }}
+      title="Create folder"
+    >
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+      </svg>
+    </button>
+  );
+
+  // ── Root drop zone for moving items out of folders ────────────────────
+  const makeRootDropZone = (section: string, moveFn: (id: string, folderId: string | null) => Promise<void>) => ({
+    onDragOver: (e: React.DragEvent) => {
+      if (dragSection !== section) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      setDragOverId("__root__" + section);
+    },
+    onDrop: (e: React.DragEvent) => {
+      e.preventDefault();
+      const raw = e.dataTransfer.getData("text/plain");
+      try {
+        const data = JSON.parse(raw);
+        if (data.id && data.folderId) {
+          moveFn(data.id, null);
+        }
+      } catch {
+        // ignore
+      }
+      setDragOverId(null);
+      setDragSection(null);
+    },
+    onDragLeave: () => setDragOverId(null),
+  });
 
   return (
     <div
@@ -98,7 +480,7 @@ export default function Sidebar() {
               ? "text-gray-200 bg-white/[0.08] ring-1 ring-accent-bright/30 hover:bg-white/[0.10]"
               : "text-gray-600 hover:text-gray-400 hover:bg-white/[0.06]"
           }`}
-          title="Grid mode (⌘G)"
+          title="Grid mode (\u2318G)"
           onClick={toggleGridMode}
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -110,23 +492,234 @@ export default function Sidebar() {
         </button>
       </div>
       <div className="flex-1 overflow-y-auto px-1.5">
-        {/* Todo Section */}
-        {(todoSessions.length > 0 || sidebarSections.todo) && (
+        {/* Notes Section */}
+        {(activeNotes.length > 0 || sidebarSections.notes) && (
           <SidebarSection
-            title="Todo"
-            count={todoSessions.length}
-            expanded={sidebarSections.todo}
-            onToggle={() => toggleSidebarSection("todo")}
-            onAddItem={handleAddTodo}
+            title="Notes"
+            count={activeNotes.length}
+            expanded={sidebarSections.notes}
+            onToggle={() => toggleSidebarSection("notes")}
+            onAddItem={handleCreateNote}
+            extraActions={notesFolderButton}
           >
-            {todoSessions.map((session) => (
-              <TabItem
-                key={session.id}
-                session={session}
-                isActive={session.id === activeSessionId}
-                onClick={() => focusSession(session.id)}
+            {/* Inline folder creation */}
+            {creatingNoteFolder && (
+              <FolderCreateInput
+                onCommit={async (name) => {
+                  await createNoteFolder(name);
+                  setCreatingNoteFolder(false);
+                }}
+                onDiscard={() => setCreatingNoteFolder(false)}
+              />
+            )}
+
+            {/* Note folders first */}
+            {sortedNoteFolders.map((folder) => {
+              const folderNotes = notesByFolder.get(folder.id) ?? [];
+              return (
+                <SidebarFolder
+                  key={folder.id}
+                  folder={folder}
+                  expanded={!collapsedFolders.has(folder.id)}
+                  onToggle={() => toggleFolder(folder.id)}
+                  onRename={(name) => renameNoteFolder(folder.id, name)}
+                  onDelete={() => deleteNoteFolder(folder.id)}
+                  onDrop={(itemId) => moveNoteToFolder(itemId, folder.id)}
+
+                  itemCount={folderNotes.length}
+                >
+                  {folderNotes.map((note) => (
+                    <NoteItem
+                      key={note.id}
+                      note={note}
+                      isActive={note.id === activeNoteId}
+                      onClick={() => handleNoteClick(note.id)}
+                      onDelete={() => handleDeleteNote(note.id)}
+                      onArchive={() => handleArchiveNote(note.id)}
+                      draggable
+                      indented
+                      {...makeDragHandlers("notes", note.id, folder.id)}
+                    />
+                  ))}
+                </SidebarFolder>
+              );
+            })}
+
+            {/* Ungrouped notes after folders */}
+            {ungroupedNotes.map((note) => (
+              <NoteItem
+                key={note.id}
+                note={note}
+                isActive={note.id === activeNoteId}
+                onClick={() => handleNoteClick(note.id)}
+                onDelete={() => handleDeleteNote(note.id)}
+                onArchive={() => handleArchiveNote(note.id)}
+                draggable
+                {...makeDragHandlers("notes", note.id, null)}
               />
             ))}
+
+            {/* Root drop zone (when folders exist) */}
+            {sortedNoteFolders.length > 0 && (
+              <div
+                className={`h-2 rounded transition-colors ${
+                  dragOverId === "__root__notes" ? "bg-accent-bright/10" : ""
+                }`}
+                {...makeRootDropZone("notes", moveNoteToFolder)}
+              />
+            )}
+          </SidebarSection>
+        )}
+
+        {/* Archived Notes Section */}
+        {archivedNotes.length > 0 && (
+          <SidebarSection
+            title="Archived"
+            count={archivedNotes.length}
+            expanded={sidebarSections.archivedNotes}
+            onToggle={() => toggleSidebarSection("archivedNotes")}
+            dimmed
+          >
+            {archivedNotes.map((note) => (
+              <NoteItem
+                key={note.id}
+                note={note}
+                isActive={note.id === activeNoteId}
+                onClick={() => handleNoteClick(note.id)}
+                onDelete={() => handleDeleteNote(note.id)}
+                draggable
+                {...makeDragHandlers("archivedNotes", note.id)}
+              />
+            ))}
+          </SidebarSection>
+        )}
+
+        {/* Todo Section */}
+        {(allTodoSessions.length > 0 || sidebarSections.todo) && (
+          <SidebarSection
+            title="Todo"
+            count={todoViewMode === "type" ? allTodoSessions.length : todoSessions.length}
+            expanded={sidebarSections.todo}
+            onToggle={() => toggleSidebarSection("todo")}
+            onAddItem={() => openTodoModal()}
+            extraActions={
+              <div className="flex items-center gap-0.5">
+                {todoViewMode === "list" && (
+                  <button
+                    className="p-0.5 rounded hover:bg-white/[0.08] transition-colors opacity-50 hover:opacity-100"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCreateTodoFolder();
+                    }}
+                    title="Create folder"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+                    </svg>
+                  </button>
+                )}
+                {filterButton}
+              </div>
+            }
+          >
+            {todoViewMode === "type" ? (
+              /* ── Type-grouped view ─────────────────────────────── */
+              <>
+                {typeOrder.map((type) => {
+                  const items = todosByType.get(type) ?? [];
+                  if (items.length === 0) return null;
+                  const groupKey = `type-${type}`;
+                  return (
+                    <TypeGroup
+                      key={type}
+                      type={type}
+                      count={items.length}
+                      expanded={!collapsedFolders.has(groupKey)}
+                      onToggle={() => toggleFolder(groupKey)}
+                    >
+                      {items.map((session) => (
+                        <TabItem
+                          key={session.id}
+                          session={session}
+                          isActive={session.id === activeSessionId && !activeNoteId}
+                          onClick={() => handleSessionClick(session.id)}
+                          onDelete={() => handleDeleteTodo(session.id)}
+                          indented
+                        />
+                      ))}
+                    </TypeGroup>
+                  );
+                })}
+              </>
+            ) : (
+              /* ── List view with folders ────────────────────────── */
+              <>
+                {/* Inline folder creation */}
+                {creatingTodoFolder && (
+                  <FolderCreateInput
+                    onCommit={async (name) => {
+                      await createTodoFolder(name);
+                      setCreatingTodoFolder(false);
+                    }}
+                    onDiscard={() => setCreatingTodoFolder(false)}
+                  />
+                )}
+
+                {/* Todo folders first */}
+                {sortedTodoFolders.map((folder) => {
+                  const folderItems = todosByFolder.get(folder.id) ?? [];
+                  return (
+                    <SidebarFolder
+                      key={folder.id}
+                      folder={folder}
+                      expanded={!collapsedFolders.has(folder.id)}
+                      onToggle={() => toggleFolder(folder.id)}
+                      onRename={(name) => renameTodoFolder(folder.id, name)}
+                      onDelete={() => deleteTodoFolder(folder.id)}
+                      onDrop={(itemId) => moveSessionToFolder(itemId, folder.id)}
+    
+                      itemCount={folderItems.length}
+                    >
+                      {folderItems.map((session) => (
+                        <TabItem
+                          key={session.id}
+                          session={session}
+                          isActive={session.id === activeSessionId && !activeNoteId}
+                          onClick={() => handleSessionClick(session.id)}
+                          onDelete={() => handleDeleteTodo(session.id)}
+                          draggable
+                          indented
+                          {...makeDragHandlers("todo", session.id, folder.id)}
+                        />
+                      ))}
+                    </SidebarFolder>
+                  );
+                })}
+
+                {/* Ungrouped todos after folders */}
+                {ungroupedTodos.map((session) => (
+                  <TabItem
+                    key={session.id}
+                    session={session}
+                    isActive={session.id === activeSessionId && !activeNoteId}
+                    onClick={() => handleSessionClick(session.id)}
+                    onDelete={() => handleDeleteTodo(session.id)}
+                    draggable
+                    {...makeDragHandlers("todo", session.id, null)}
+                  />
+                ))}
+
+                {/* Root drop zone */}
+                {sortedTodoFolders.length > 0 && (
+                  <div
+                    className={`h-2 rounded transition-colors ${
+                      dragOverId === "__root__todo" ? "bg-accent-bright/10" : ""
+                    }`}
+                    {...makeRootDropZone("todo", moveSessionToFolder)}
+                  />
+                )}
+              </>
+            )}
           </SidebarSection>
         )}
 
@@ -141,8 +734,8 @@ export default function Sidebar() {
             <TabItem
               key={session.id}
               session={session}
-              isActive={session.id === activeSessionId}
-              onClick={() => focusSession(session.id)}
+              isActive={session.id === activeSessionId && !activeNoteId}
+              onClick={() => handleSessionClick(session.id)}
             />
           ))}
         </SidebarSection>
@@ -160,8 +753,8 @@ export default function Sidebar() {
               <TabItem
                 key={session.id}
                 session={session}
-                isActive={session.id === activeSessionId}
-                onClick={() => focusSession(session.id)}
+                isActive={session.id === activeSessionId && !activeNoteId}
+                onClick={() => handleSessionClick(session.id)}
               />
             ))}
           </SidebarSection>
@@ -170,7 +763,7 @@ export default function Sidebar() {
       <div className="px-3 py-2.5 flex-shrink-0 space-y-1.5">
         <button
           className="titlebar-no-drag w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded text-[11px] text-gray-500 hover:text-gray-300 hover:bg-white/[0.04] cursor-pointer transition-colors duration-75 border border-white/[0.06]"
-          title="New session (⌘N)"
+          title="New session (\u2318N)"
           onClick={openNewSessionModal}
         >
           + New session

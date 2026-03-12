@@ -44,7 +44,7 @@ contextBridge.exposeInMainWorld("volley", {
     start(task: string, baseBranch?: string): void {
       ipcRenderer.send("session:start", { task, baseBranch });
     },
-    onOpened(callback: (session: { id: string; slug: string; branch: string; worktreePath: string; task: string; lifecycle?: string; completedAt?: string; mergedTo?: string; pendingId?: string }) => void): void {
+    onOpened(callback: (session: { id: string; slug: string; branch: string; worktreePath: string; task: string; lifecycle?: string; completedAt?: string; mergedTo?: string; pendingId?: string; todoType?: string; description?: string; planStatus?: string; planMarkdown?: string; sourceNoteId?: string | null; folderId?: string | null }) => void): void {
       ipcRenderer.on("session:opened", (_event, session) => callback(session));
     },
     onClosed(callback: (payload: { sessionId: string }) => void): void {
@@ -65,11 +65,11 @@ contextBridge.exposeInMainWorld("volley", {
     remove(sessionId: string): Promise<{ ok: boolean; error?: string }> {
       return ipcRenderer.invoke("session:remove", { sessionId });
     },
-    createTodo(task: string): Promise<{ ok: boolean; id?: string; error?: string }> {
-      return ipcRenderer.invoke("session:create-todo", { task });
+    createTodo(task: string, opts?: { todoType?: string; description?: string; autoPlan?: boolean; sourceNoteId?: string }): Promise<{ ok: boolean; id?: string; error?: string }> {
+      return ipcRenderer.invoke("session:create-todo", { task, ...opts });
     },
-    updateTodo(sessionId: string, task: string): Promise<{ ok: boolean; error?: string }> {
-      return ipcRenderer.invoke("session:update-todo", { sessionId, task });
+    updateTodo(sessionId: string, updates: { task?: string; todoType?: string; description?: string }): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("session:update-todo", { sessionId, ...updates });
     },
     startTodo(sessionId: string, baseBranch?: string): void {
       ipcRenderer.send("session:start-todo", { sessionId, baseBranch });
@@ -79,6 +79,30 @@ contextBridge.exposeInMainWorld("volley", {
     },
     delete(sessionId: string): Promise<{ ok: boolean; error?: string }> {
       return ipcRenderer.invoke("session:delete", { sessionId });
+    },
+    updatePlan(sessionId: string, markdown: string): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("session:update-plan", { sessionId, markdown });
+    },
+    reorder(ids: string[], lifecycle: string): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("session:reorder", { ids, lifecycle });
+    },
+    foldersList(): Promise<{ folders: any[] }> {
+      return ipcRenderer.invoke("session:folders-list");
+    },
+    folderCreate(name: string): Promise<{ ok: boolean; folder?: any; error?: string }> {
+      return ipcRenderer.invoke("session:folder-create", { name });
+    },
+    folderRename(id: string, name: string): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("session:folder-rename", { id, name });
+    },
+    folderDelete(id: string): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("session:folder-delete", { id });
+    },
+    folderReorder(ids: string[]): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("session:folder-reorder", { ids });
+    },
+    moveToFolder(sessionId: string, folderId: string | null): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("session:move-to-folder", { sessionId, folderId });
     },
   },
   git: {
@@ -232,6 +256,76 @@ contextBridge.exposeInMainWorld("volley", {
     },
     onSwitched(callback: (payload: { projectId: string | null; projectName: string; projectPath: string }) => void): void {
       ipcRenderer.on("project:switched", (_event, payload) => callback(payload));
+    },
+  },
+  planning: {
+    planOne(sessionId: string): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("planning:plan-one", { sessionId });
+    },
+    planAll(): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("planning:plan-all");
+    },
+    cancel(sessionId: string): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("planning:cancel", { sessionId });
+    },
+    status(): Promise<{ currentSessionId: string | null; queue: string[] }> {
+      return ipcRenderer.invoke("planning:status");
+    },
+    onStatusChanged(callback: (payload: { sessionId: string; planStatus: string; planMarkdown?: string; error?: string }) => void): void {
+      ipcRenderer.on("planning:status-changed", (_event, payload) => callback(payload));
+    },
+    analyzeProject(): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("planning:analyze-project");
+    },
+    contextStatus(): Promise<{ exists: boolean; analyzing: boolean; updatedAt?: string }> {
+      return ipcRenderer.invoke("planning:context-status");
+    },
+    onAnalyzeStatus(callback: (payload: { status: string; error?: string }) => void): void {
+      ipcRenderer.on("planning:analyze-status", (_event, payload) => callback(payload));
+    },
+  },
+  notes: {
+    list(): Promise<{ notes: any[] }> {
+      return ipcRenderer.invoke("notes:list");
+    },
+    create(title: string): Promise<{ ok: boolean; note?: any; error?: string }> {
+      return ipcRenderer.invoke("notes:create", { title });
+    },
+    update(id: string, updates: { title?: string; content?: string }): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("notes:update", { id, ...updates });
+    },
+    archive(id: string): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("notes:archive", { id });
+    },
+    unarchive(id: string): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("notes:unarchive", { id });
+    },
+    delete(id: string): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("notes:delete", { id });
+    },
+    extractTodos(noteId: string, content: string): Promise<{ ok: boolean; drafts?: any[]; error?: string }> {
+      return ipcRenderer.invoke("notes:extract-todos", { noteId, content });
+    },
+    addTodoIds(noteId: string, todoIds: string[]): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("notes:add-todo-ids", { noteId, todoIds });
+    },
+    reorder(ids: string[]): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("notes:reorder", { ids });
+    },
+    folderCreate(name: string): Promise<{ ok: boolean; folder?: any; error?: string }> {
+      return ipcRenderer.invoke("notes:folder-create", { name });
+    },
+    folderRename(id: string, name: string): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("notes:folder-rename", { id, name });
+    },
+    folderDelete(id: string): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("notes:folder-delete", { id });
+    },
+    folderReorder(ids: string[]): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("notes:folder-reorder", { ids });
+    },
+    moveToFolder(noteId: string, folderId: string | null): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("notes:move-to-folder", { noteId, folderId });
     },
   },
   openExternal(url: string): void {

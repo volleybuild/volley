@@ -2,6 +2,14 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 export type SessionLifecycle = "todo" | "in_progress" | "completed";
+export type TodoType = "bug" | "feature" | "improvement";
+export type PlanStatus = "pending" | "planning" | "ready" | "failed";
+
+export interface Folder {
+  id: string;
+  name: string;
+  order: number;
+}
 
 export interface SessionState {
   id: string;
@@ -16,11 +24,18 @@ export interface SessionState {
   completedAt?: string;
   mergedTo?: string;
   agentSessionId?: string;
+  todoType?: TodoType;
+  description?: string;
+  planStatus?: PlanStatus;
+  planMarkdown?: string;
+  sourceNoteId?: string | null;
+  folderId?: string | null;
 }
 
 export interface VolleyState {
   repoRoot: string;
   sessions: SessionState[];
+  todoFolders?: Folder[];
 }
 
 export function loadStateFromDisk(repoRoot: string): VolleyState | null {
@@ -36,4 +51,13 @@ export function loadStateFromDisk(repoRoot: string): VolleyState | null {
   } catch {
     return null;
   }
+}
+
+export function saveStateToDisk(repoRoot: string, state: VolleyState): void {
+  const volleyDir = path.join(repoRoot, ".volley");
+  if (!fs.existsSync(volleyDir)) {
+    fs.mkdirSync(volleyDir, { recursive: true });
+  }
+  const statePath = path.join(volleyDir, "state.json");
+  fs.writeFileSync(statePath, JSON.stringify(state, null, 2), "utf-8");
 }

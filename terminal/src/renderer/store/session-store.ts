@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebglAddon } from "@xterm/addon-webgl";
-import type { SessionState, SessionLifecycle } from "./types";
+import type { SessionState, SessionLifecycle, TodoType, PlanStatus } from "./types";
 import { volleyTheme } from "../constants/theme";
 
 interface SessionStore {
@@ -11,8 +11,9 @@ interface SessionStore {
   gridMode: boolean;
   startCommand: string | null;
   setupLogs: Record<string, string>;
+  todoFolders: FolderData[];
   addSession: (session: VolleySession & { pendingId?: string }) => void;
-  addTodoSession: (session: { id: string; task: string }) => void;
+  addTodoSession: (session: { id: string; task: string; todoType?: TodoType; description?: string; planStatus?: PlanStatus; sourceNoteId?: string | null; folderId?: string | null }) => void;
   addPendingSession: (pendingId: string, task: string) => void;
   writePendingOutput: (pendingId: string, data: string) => void;
   setPendingFailed: (pendingId: string, error: string) => void;
@@ -30,7 +31,18 @@ interface SessionStore {
   setRunStatus: (sessionId: string, status: SessionState["runStatus"], exitCode?: number) => void;
   setSetupWarning: (sessionId: string, warning: string) => void;
   dismissSetupWarning: (sessionId: string) => void;
+  updatePlanStatus: (sessionId: string, planStatus: string, planMarkdown?: string, planError?: string) => void;
+  updateSessionDescription: (sessionId: string, description: string) => void;
+  updateSessionTodoType: (sessionId: string, todoType: TodoType) => void;
+  updateSessionPlan: (sessionId: string, planMarkdown: string) => void;
+  reorderSessions: (orderedIds: string[], lifecycle: SessionLifecycle) => void;
   clearAllSessions: () => void;
+  fetchTodoFolders: () => Promise<void>;
+  createTodoFolder: (name: string) => Promise<FolderData | null>;
+  renameTodoFolder: (id: string, name: string) => Promise<void>;
+  deleteTodoFolder: (id: string) => Promise<void>;
+  reorderTodoFolders: (orderedIds: string[]) => void;
+  moveSessionToFolder: (sessionId: string, folderId: string | null) => Promise<void>;
 }
 
 function createSessionStore() {
@@ -40,6 +52,7 @@ function createSessionStore() {
   gridMode: false,
   startCommand: null,
   setupLogs: {},
+  todoFolders: [],
 
   addSession: (session) => {
     const { sessions } = get();
@@ -111,6 +124,12 @@ function createSessionStore() {
       runFitAddon: null,
       runStatus: "idle",
       runExitCode: null,
+      todoType: (session as any).todoType,
+      description: (session as any).description,
+      planStatus: (session as any).planStatus,
+      planMarkdown: (session as any).planMarkdown,
+      sourceNoteId: (session as any).sourceNoteId,
+      folderId: (session as any).folderId,
     };
 
     // Build new map, replacing pending and/or todo entries at same position
@@ -172,7 +191,7 @@ function createSessionStore() {
     set({ sessions: next, activeSessionId: pendingId, setupLogs: { ...get().setupLogs, [pendingId]: "" } });
   },
 
-  addTodoSession: ({ id, task }) => {
+  addTodoSession: ({ id, task, todoType, description, planStatus, sourceNoteId, folderId }) => {
     const { sessions } = get();
     if (sessions.has(id)) return;
 
@@ -192,6 +211,11 @@ function createSessionStore() {
       runFitAddon: null,
       runStatus: "idle",
       runExitCode: null,
+      todoType,
+      description,
+      planStatus,
+      sourceNoteId,
+      folderId,
     };
 
     const next = new Map(sessions);
@@ -401,12 +425,163 @@ function createSessionStore() {
     set({ sessions: next });
   },
 
+  updatePlanStatus: (sessionId, planStatus, planMarkdown, planError) => {
+    const { sessions } = get();
+    const session = sessions.get(sessionId);
+    if (!session) return;
+    const next = new Map(sessions);
+    next.set(sessionId, {
+      ...session,
+      planStatus: planStatus as any,
+      ...(planMarkdown !== undefined ? { planMarkdown } : {}),
+      planError: planStatus === "failed" ? planError : undefined,
+    });
+    set({ sessions: next });
+  },
+
+  updateSessionDescription: (sessionId, description) => {
+    const { sessions } = get();
+    const session = sessions.get(sessionId);
+    if (!session) return;
+    const next = new Map(sessions);
+    next.set(sessionId, { ...session, description });
+    set({ sessions: next });
+  },
+
+  updateSessionTodoType: (sessionId, todoType) => {
+    const { sessions } = get();
+    const session = sessions.get(sessionId);
+    if (!session) return;
+    const next = new Map(sessions);
+    next.set(sessionId, { ...session, todoType });
+    set({ sessions: next });
+  },
+
+  updateSessionPlan: (sessionId, planMarkdown) => {
+    const { sessions } = get();
+    const session = sessions.get(sessionId);
+    if (!session) return;
+    const next = new Map(sessions);
+    next.set(sessionId, { ...session, planMarkdown, planStatus: "ready" as PlanStatus });
+    set({ sessions: next });
+  },
+
+  reorderSessions: (orderedIds, lifecycle) => {
+    const { sessions } = get();
+    const matching: SessionState[] = [];
+    const rest: [string, SessionState][] = [];
+
+    for (const [key, session] of sessions) {
+      if (session.lifecycle === lifecycle) {
+        matching.push(session);
+      } else {
+        rest.push([key, session]);
+      }
+    }
+
+    const byId = new Map(matching.map(s => [s.id, s]));
+    const ordered = orderedIds.map(id => byId.get(id)).filter(Boolean) as SessionState[];
+    // Add any matching sessions not in orderedIds
+    for (const s of matching) {
+      if (!orderedIds.includes(s.id)) ordered.push(s);
+    }
+
+    const next = new Map<string, SessionState>();
+    // Preserve order: non-matching first in original order, then reordered matching
+    // Actually, we need to interleave by lifecycle position. Simpler: just rebuild by lifecycle order
+    const allEntries: [string, SessionState][] = [...rest, ...ordered.map(s => [s.id, s] as [string, SessionState])];
+    const lifecycleOrder: Record<string, number> = { todo: 0, in_progress: 1, completed: 2 };
+    allEntries.sort((a, b) => {
+      const la = lifecycleOrder[a[1].lifecycle] ?? 1;
+      const lb = lifecycleOrder[b[1].lifecycle] ?? 1;
+      return la - lb;
+    });
+    for (const [key, session] of allEntries) {
+      next.set(key, session);
+    }
+
+    set({ sessions: next });
+    window.volley.session.reorder(orderedIds, lifecycle);
+  },
+
   clearAllSessions: () => {
     for (const [, session] of get().sessions) {
       session.terminal?.dispose();
       session.runTerminal?.dispose();
     }
-    set({ sessions: new Map(), activeSessionId: null, setupLogs: {} });
+    set({ sessions: new Map(), activeSessionId: null, setupLogs: {}, todoFolders: [] });
+  },
+
+  fetchTodoFolders: async () => {
+    const { folders } = await window.volley.session.foldersList();
+    set({ todoFolders: folders ?? [] });
+  },
+
+  createTodoFolder: async (name: string) => {
+    const result = await window.volley.session.folderCreate(name);
+    if (result.ok && result.folder) {
+      set((state) => ({ todoFolders: [result.folder!, ...state.todoFolders] }));
+      return result.folder;
+    }
+    return null;
+  },
+
+  renameTodoFolder: async (id: string, name: string) => {
+    const result = await window.volley.session.folderRename(id, name);
+    if (result.ok) {
+      set((state) => ({
+        todoFolders: state.todoFolders.map((f) => (f.id === id ? { ...f, name } : f)),
+      }));
+    }
+  },
+
+  deleteTodoFolder: async (id: string) => {
+    const result = await window.volley.session.folderDelete(id);
+    if (result.ok) {
+      set((state) => {
+        const next = new Map(state.sessions);
+        for (const [key, session] of next) {
+          if (session.folderId === id) {
+            next.set(key, { ...session, folderId: null });
+          }
+        }
+        return {
+          todoFolders: state.todoFolders.filter((f) => f.id !== id),
+          sessions: next,
+        };
+      });
+    }
+  },
+
+  reorderTodoFolders: (orderedIds: string[]) => {
+    set((state) => {
+      const byId = new Map(state.todoFolders.map((f) => [f.id, f]));
+      const ordered = orderedIds
+        .map((id, i) => {
+          const f = byId.get(id);
+          return f ? { ...f, order: i } : null;
+        })
+        .filter(Boolean) as FolderData[];
+      for (const f of state.todoFolders) {
+        if (!orderedIds.includes(f.id)) ordered.push(f);
+      }
+      return { todoFolders: ordered };
+    });
+    window.volley.session.folderReorder(orderedIds);
+  },
+
+  moveSessionToFolder: async (sessionId: string, folderId: string | null) => {
+    const result = await window.volley.session.moveToFolder(sessionId, folderId);
+    if (result.ok) {
+      set((state) => {
+        const next = new Map(state.sessions);
+        const session = next.get(sessionId);
+        if (session) {
+          next.set(sessionId, { ...session, folderId });
+        }
+        return { sessions: next };
+      });
+    }
   },
 }));
 }

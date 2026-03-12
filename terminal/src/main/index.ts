@@ -5,11 +5,14 @@ import * as fs from "node:fs";
 import hljs from "highlight.js/lib/common";
 import { PtyManager } from "./pty-manager";
 import { SocketServer } from "./socket-server";
-import { loadStateFromDisk } from "./state-reader";
+import { loadStateFromDisk, saveStateToDisk } from "./state-reader";
 import { registerFsHandlers } from "./fs-handler";
 import { registerGitHandlers } from "./git-handler";
 import { registerSettingsHandlers } from "./settings-handler";
 import { registerAgentHandlers } from "./agent-handler";
+import { registerPlannerHandlers, stopPlanner } from "./planner";
+import { registerNotesHandlers } from "./notes-handler";
+import { registerNoteExtractorHandlers } from "./note-extractor";
 import { spawnCliArgs } from "./cli-resolver";
 import {
   loadRegistry,
@@ -199,6 +202,12 @@ function syncSessions(): void {
         completedAt: session.completedAt,
         mergedTo: session.mergedTo,
         pendingId: matchedPendingId,
+        todoType: session.todoType,
+        description: session.description,
+        planStatus: session.planStatus,
+        planMarkdown: session.planMarkdown,
+        sourceNoteId: session.sourceNoteId,
+        folderId: session.folderId,
       });
     } else if (previousLifecycle !== lifecycle) {
       // Lifecycle transition (e.g. "todo" → "in_progress")
@@ -231,6 +240,12 @@ function syncSessions(): void {
         completedAt: session.completedAt,
         mergedTo: session.mergedTo,
         pendingId: matchedPendingId,
+        todoType: session.todoType,
+        description: session.description,
+        planStatus: session.planStatus,
+        planMarkdown: session.planMarkdown,
+        sourceNoteId: session.sourceNoteId,
+        folderId: session.folderId,
       });
     }
   }
@@ -303,6 +318,7 @@ function readProviderOverride(): ProviderName | undefined {
 function switchToProject(projectPath: string): void {
   log("switching project:", repoRoot, "→", projectPath);
   // Tear down current project
+  stopPlanner();
   ptyManager.killAll();
   socketServer?.stop();
   socketServer = null;
@@ -407,6 +423,9 @@ app.whenReady().then(() => {
   registerGitHandlers(() => repoRoot, () => providerOverride);
   registerSettingsHandlers(() => repoRoot);
   registerAgentHandlers(() => repoRoot, () => mainWindow);
+  registerPlannerHandlers(() => repoRoot, () => mainWindow);
+  registerNotesHandlers(() => repoRoot);
+  registerNoteExtractorHandlers(() => repoRoot);
 
   // ── PTY handlers ───────────────────────────────────────────────────────
 
@@ -654,26 +673,44 @@ app.whenReady().then(() => {
   });
 
   // Create a todo session (no worktree/branch yet)
-  ipcMain.handle("session:create-todo", (_event, { task }: { task: string }) => {
+  ipcMain.handle("session:create-todo", (_event, { task, todoType, description, autoPlan, sourceNoteId }: { task: string; todoType?: string; description?: string; autoPlan?: boolean; sourceNoteId?: string }) => {
     if (!repoRoot) return Promise.resolve({ ok: false, error: "No repo root" });
     return new Promise<{ ok: boolean; id?: string; error?: string }>((resolve) => {
-      execCli(["todo", task], repoRoot!, (err, _stdout, stderr) => {
+      // Snapshot existing session IDs so we can find the new one
+      const existingIds = new Set(
+        (loadStateFromDisk(repoRoot!) ?? { sessions: [] }).sessions.map(s => s.id)
+      );
+
+      const args = ["todo"];
+      if (todoType) args.push("--type", todoType);
+      if (description) args.push("--description", description);
+      if (sourceNoteId) args.push("--source-note", sourceNoteId);
+      if (autoPlan === false) args.push("--no-plan");
+      args.push(task);
+      execCli(args, repoRoot!, (err, _stdout, stderr) => {
         if (err) {
           resolve({ ok: false, error: stderr || err.message });
         } else {
+          // Find the new session ID by diffing state
+          const newState = loadStateFromDisk(repoRoot!);
+          const newSession = newState?.sessions.find(s => !existingIds.has(s.id));
           // Trigger sync to pick up the new session
           setTimeout(() => syncSessions(), 100);
-          resolve({ ok: true });
+          resolve({ ok: true, id: newSession?.id });
         }
       });
     });
   });
 
-  // Update a todo session's task
-  ipcMain.handle("session:update-todo", (_event, { sessionId, task }: { sessionId: string; task: string }) => {
+  // Update a todo session's fields
+  ipcMain.handle("session:update-todo", (_event, { sessionId, task, todoType, description }: { sessionId: string; task?: string; todoType?: string; description?: string }) => {
     if (!repoRoot) return Promise.resolve({ ok: false, error: "No repo root" });
     return new Promise<{ ok: boolean; error?: string }>((resolve) => {
-      execCli(["todo", "--update", sessionId, task], repoRoot!, (err, _stdout, stderr) => {
+      const args = ["todo", "--update", sessionId];
+      if (todoType) args.push("--type", todoType);
+      if (description) args.push("--description", description);
+      if (task) args.push(task);
+      execCli(args, repoRoot!, (err, _stdout, stderr) => {
         if (err) {
           resolve({ ok: false, error: stderr || err.message });
         } else {
@@ -752,6 +789,153 @@ app.whenReady().then(() => {
     });
   });
 
+  // Update plan markdown directly (bypasses CLI — terminal-only field)
+  ipcMain.handle("session:update-plan", (_event, { sessionId, markdown }: { sessionId: string; markdown: string }) => {
+    if (!repoRoot) return { ok: false, error: "No repo root" };
+    try {
+      const state = loadStateFromDisk(repoRoot);
+      if (!state) return { ok: false, error: "No state file" };
+      const session = state.sessions.find(s => s.id === sessionId);
+      if (!session) return { ok: false, error: "Session not found" };
+      session.planMarkdown = markdown;
+      session.planStatus = "ready";
+      saveStateToDisk(repoRoot, state);
+      return { ok: true };
+    } catch (err: any) {
+      return { ok: false, error: err.message };
+    }
+  });
+
+  // Reorder sessions of a given lifecycle
+  ipcMain.handle("session:reorder", (_event, { ids, lifecycle }: { ids: string[]; lifecycle: string }) => {
+    if (!repoRoot) return { ok: false, error: "No repo root" };
+    try {
+      const state = loadStateFromDisk(repoRoot);
+      if (!state) return { ok: false, error: "No state file" };
+      // Separate matching and non-matching sessions
+      const matching = state.sessions.filter(s => (s.lifecycle || "in_progress") === lifecycle);
+      const rest = state.sessions.filter(s => (s.lifecycle || "in_progress") !== lifecycle);
+      // Build ordered list from ids
+      const byId = new Map(matching.map(s => [s.id, s]));
+      const ordered = ids.map(id => byId.get(id)).filter(Boolean) as typeof matching;
+      // Add any matching sessions not in ids at the end
+      for (const s of matching) {
+        if (!ids.includes(s.id)) ordered.push(s);
+      }
+      state.sessions = [...rest, ...ordered];
+      // Re-sort to preserve lifecycle grouping: todo, in_progress, completed
+      const lifecycleOrder: Record<string, number> = { todo: 0, in_progress: 1, completed: 2 };
+      state.sessions.sort((a, b) => {
+        const la = lifecycleOrder[(a.lifecycle || "in_progress")] ?? 1;
+        const lb = lifecycleOrder[(b.lifecycle || "in_progress")] ?? 1;
+        return la - lb;
+      });
+      saveStateToDisk(repoRoot, state);
+      return { ok: true };
+    } catch (err: any) {
+      return { ok: false, error: err.message };
+    }
+  });
+
+  // ── Todo folder handlers ─────────────────────────────────────────────
+
+  ipcMain.handle("session:folders-list", () => {
+    if (!repoRoot) return { folders: [] };
+    const state = loadStateFromDisk(repoRoot);
+    return { folders: state?.todoFolders ?? [] };
+  });
+
+  ipcMain.handle("session:folder-create", (_event, { name }: { name: string }) => {
+    if (!repoRoot) return { ok: false, error: "No repo root" };
+    try {
+      const state = loadStateFromDisk(repoRoot);
+      if (!state) return { ok: false, error: "No state file" };
+      if (!state.todoFolders) state.todoFolders = [];
+      const minOrder = state.todoFolders.length > 0 ? Math.min(...state.todoFolders.map((f) => f.order)) : 0;
+      const folder = {
+        id: `tf-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        name,
+        order: minOrder - 1,
+      };
+      state.todoFolders.unshift(folder);
+      saveStateToDisk(repoRoot, state);
+      return { ok: true, folder };
+    } catch (err: any) {
+      return { ok: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle("session:folder-rename", (_event, { id, name }: { id: string; name: string }) => {
+    if (!repoRoot) return { ok: false, error: "No repo root" };
+    try {
+      const state = loadStateFromDisk(repoRoot);
+      if (!state) return { ok: false, error: "No state file" };
+      const folder = (state.todoFolders ?? []).find((f) => f.id === id);
+      if (!folder) return { ok: false, error: "Folder not found" };
+      folder.name = name;
+      saveStateToDisk(repoRoot, state);
+      return { ok: true };
+    } catch (err: any) {
+      return { ok: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle("session:folder-delete", (_event, { id }: { id: string }) => {
+    if (!repoRoot) return { ok: false, error: "No repo root" };
+    try {
+      const state = loadStateFromDisk(repoRoot);
+      if (!state) return { ok: false, error: "No state file" };
+      if (!state.todoFolders) return { ok: false, error: "No folders" };
+      const idx = state.todoFolders.findIndex((f) => f.id === id);
+      if (idx === -1) return { ok: false, error: "Folder not found" };
+      state.todoFolders.splice(idx, 1);
+      for (const session of state.sessions) {
+        if (session.folderId === id) session.folderId = null;
+      }
+      saveStateToDisk(repoRoot, state);
+      return { ok: true };
+    } catch (err: any) {
+      return { ok: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle("session:folder-reorder", (_event, { ids }: { ids: string[] }) => {
+    if (!repoRoot) return { ok: false, error: "No repo root" };
+    try {
+      const state = loadStateFromDisk(repoRoot);
+      if (!state || !state.todoFolders) return { ok: false, error: "No state file" };
+      const byId = new Map(state.todoFolders.map((f) => [f.id, f]));
+      const ordered: typeof state.todoFolders = [];
+      for (let i = 0; i < ids.length; i++) {
+        const f = byId.get(ids[i]);
+        if (f) { f.order = i; ordered.push(f); }
+      }
+      for (const f of state.todoFolders) {
+        if (!ids.includes(f.id)) ordered.push(f);
+      }
+      state.todoFolders = ordered;
+      saveStateToDisk(repoRoot, state);
+      return { ok: true };
+    } catch (err: any) {
+      return { ok: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle("session:move-to-folder", (_event, { sessionId, folderId }: { sessionId: string; folderId: string | null }) => {
+    if (!repoRoot) return { ok: false, error: "No repo root" };
+    try {
+      const state = loadStateFromDisk(repoRoot);
+      if (!state) return { ok: false, error: "No state file" };
+      const session = state.sessions.find((s) => s.id === sessionId);
+      if (!session) return { ok: false, error: "Session not found" };
+      session.folderId = folderId;
+      saveStateToDisk(repoRoot, state);
+      return { ok: true };
+    } catch (err: any) {
+      return { ok: false, error: err.message };
+    }
+  });
+
   // Delete session from history
   ipcMain.handle("session:delete", (_event, { sessionId }: { sessionId: string }) => {
     if (!repoRoot) return Promise.resolve({ ok: false, error: "No repo root" });
@@ -783,6 +967,7 @@ app.on("window-all-closed", () => {
 });
 
 app.on("before-quit", () => {
+  stopPlanner();
   stateWatcher?.close();
   ptyManager?.killAll();
   socketServer?.stop();
