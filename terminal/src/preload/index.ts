@@ -59,6 +59,9 @@ contextBridge.exposeInMainWorld("volley", {
     onSetupFailed(callback: (payload: { pendingId: string; error: string }) => void): void {
       ipcRenderer.on("session:setup-failed", (_event, payload) => callback(payload));
     },
+    onSetupWarning(callback: (payload: { task: string; error: string }) => void): void {
+      ipcRenderer.on("session:setup-warning", (_event, payload) => callback(payload));
+    },
     remove(sessionId: string): Promise<{ ok: boolean; error?: string }> {
       return ipcRenderer.invoke("session:remove", { sessionId });
     },

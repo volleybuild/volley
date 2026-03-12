@@ -90,7 +90,12 @@ export function startSession(task: string, branchPrefix = "vo", baseBranchOverri
     if (config.setup) {
       for (const cmd of config.setup) {
         console.log(`  Running: ${cmd}`);
-        execSync(cmd, { cwd: worktreePath, stdio: "inherit" });
+        try {
+          execSync(cmd, { cwd: worktreePath, stdio: "inherit" });
+        } catch (err: any) {
+          console.error(`  Command failed: ${cmd}`);
+          // Continue — session will still be created
+        }
       }
     }
   }
@@ -384,7 +389,12 @@ export function startTodoSession(id: string, branchPrefix = "vo", baseBranchOver
     }
     if (config.setup) {
       for (const cmd of config.setup) {
-        execSync(cmd, { cwd: worktreePath, stdio: "inherit" });
+        try {
+          execSync(cmd, { cwd: worktreePath, stdio: "inherit" });
+        } catch (err: any) {
+          console.error(`  Command failed: ${cmd}`);
+          // Continue — session will still be created
+        }
       }
     }
   }

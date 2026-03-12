@@ -7,6 +7,7 @@ import { useKeyboardShortcuts } from "./hooks/use-keyboard-shortcuts";
 import { useElapsedTick } from "./hooks/use-elapsed-tick";
 import Sidebar from "./components/layout/Sidebar";
 import SessionHeader from "./components/layout/SessionHeader";
+import SetupWarningBanner from "./components/layout/SetupWarningBanner";
 import EmptyState from "./components/layout/EmptyState";
 import TabbedView from "./components/terminal/TabbedView";
 import GridView from "./components/terminal/GridView";
@@ -67,6 +68,7 @@ export default function App() {
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           {!settingsOpen && <SessionHeader />}
+          {!settingsOpen && <SetupWarningBanner />}
           {renderContent()}
         </div>
       </div>

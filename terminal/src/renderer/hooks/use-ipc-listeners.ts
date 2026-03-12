@@ -55,6 +55,19 @@ export function useIpcListeners() {
       useSessionStore.getState().setPendingFailed(pendingId, error);
     });
 
+    window.volley.session.onSetupWarning(({ task, error }) => {
+      console.log("[renderer] session:setup-warning", task, error);
+      // Match task name to session — the session may have just been added
+      const slugify = (s: string) => s.toLowerCase().replace(/[\s_]+/g, "-");
+      const sessions = useSessionStore.getState().sessions;
+      for (const [id, s] of sessions) {
+        if (slugify(s.task) === slugify(task) || id === slugify(task)) {
+          useSessionStore.getState().setSetupWarning(id, error);
+          break;
+        }
+      }
+    });
+
     window.volley.session.onOpened((session) => {
       console.log("[renderer] session:opened", session);
       useSessionStore.getState().addSession(session);

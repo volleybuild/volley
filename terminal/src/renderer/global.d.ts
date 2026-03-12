@@ -57,6 +57,7 @@ interface VolleyApi {
     onPending(callback: (payload: { pendingId: string; task: string }) => void): void;
     onSetupOutput(callback: (payload: { pendingId: string; data: string }) => void): void;
     onSetupFailed(callback: (payload: { pendingId: string; error: string }) => void): void;
+    onSetupWarning(callback: (payload: { task: string; error: string }) => void): void;
     remove(sessionId: string): Promise<{ ok: boolean; error?: string }>;
     createTodo(task: string): Promise<{ ok: boolean; id?: string; error?: string }>;
     updateTodo(sessionId: string, task: string): Promise<{ ok: boolean; error?: string }>;
