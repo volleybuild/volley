@@ -1,8 +1,25 @@
-# Volley
+<p align="center">
+  <img src=".github/assets/banner.jpg" alt="Volley" width="100%">
+</p>
 
-An open-source desktop app for running multiple AI coding sessions in parallel — each in its own isolated environment. Built-in git, grid view, and project management.
+<p align="center">
+  An open-source desktop app for running parallel AI coding sessions — each in its own isolated environment.
+</p>
 
-**[volley.build](https://volley.build)**
+<p align="center">
+  <a href="https://volley.build">Website</a> · <a href="https://github.com/volleybuild/volley/releases/latest">Download</a>
+</p>
+
+<!-- screenshot placeholder -->
+
+## Features
+
+- Parallel sessions in isolated git worktrees
+- Built-in git — commit, push, PR, merge from the app
+- Notes & todos for planning work
+- Grid view — monitor all sessions at once
+- Project switching across repos
+- Sound effects & session pause/resume
 
 ## Install
 
@@ -11,7 +28,7 @@ Download the latest `.dmg` from the [Releases page](https://github.com/volleybui
 > [!WARNING]
 > You need a Claude API key for Volley to work. Add it in Settings after launching.
 
-macOS only for now. Windows and Linux coming soon.
+macOS only for now. Windows & Linux coming soon.
 
 > [!NOTE]
 > The app is not code-signed yet. If macOS says it's "damaged", run:
@@ -19,26 +36,26 @@ macOS only for now. Windows and Linux coming soon.
 > xattr -cr /Applications/Volley.app
 > ```
 
-## Some notes
+## Quick Start
 
-We are very early in this project. Expect bugs.
-
-We are not accepting contributions yet.
+1. Download the `.dmg`, drag to Applications
+2. Open a repo — auto-detects the project
+3. Start sessions — describe the work, let agents run in parallel
 
 ## Development
 
 ```bash
 # Terminal app (Electron)
-cd terminal
-npm install
-npm run dev
+cd terminal && npm install && npm run dev
 
 # CLI
-npm install
-npm run build
-npm link
+npm install && npm run build && npm link
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT
+AGPL-3.0

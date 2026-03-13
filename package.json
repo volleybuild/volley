@@ -18,7 +18,7 @@
     "parallel",
     "agents"
   ],
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "devDependencies": {
     "@types/node": "^25.3.3",
     "typescript": "^5.9.3"
