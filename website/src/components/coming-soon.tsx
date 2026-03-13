@@ -20,6 +20,10 @@ const ROADMAP_ITEMS = [
     title: "Windows & Linux",
     description: "Native builds for all platforms.",
   },
+  {
+    title: "Custom themes",
+    description: "Choose from built-in themes or create your own color schemes.",
+  },
 ];
 
 export function ComingSoon() {
@@ -31,11 +35,11 @@ export function ComingSoon() {
         <div className="reveal">
           <SectionHeading title="Coming soon" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="flex flex-wrap justify-center gap-3">
           {ROADMAP_ITEMS.map((item, i) => (
             <div
               key={item.title}
-              className={`reveal reveal-delay-${Math.min(i % 2 + 1, 3)} flex items-start gap-3 p-4 rounded-lg border border-dashed border-white/[0.06]`}
+              className={`reveal reveal-delay-${Math.min(i % 2 + 1, 3)} w-full sm:w-[calc(50%-0.375rem)] flex items-start gap-3 p-4 rounded-lg border border-dashed border-white/[0.06]`}
             >
               <span className="mt-[7px] w-1 h-1 rounded-full bg-accent-bright/40 flex-shrink-0" />
               <div>

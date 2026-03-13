@@ -42,6 +42,18 @@ export const FEATURES: Feature[] = [
       "Switch between repos. Volley auto-detects projects and keeps state per-project.",
     icon: "M3 7l9-4 9 4M3 7v10l9 4M3 7l9 4M21 7v10l-9 4M21 7l-9 4M12 11v11",
   },
+  {
+    title: "Sound effects",
+    description:
+      "Soft audio cues when sessions start, pause, finish, or need input. Toggle per-event in settings.",
+    icon: "M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07",
+  },
+  {
+    title: "Pause & resume",
+    description:
+      "Pause sessions to free resources and resume them later. State is preserved across restarts.",
+    icon: "M10 9V6L3 14l7 8v-3M14 15v3l7-8-7-8v3",
+  },
 ];
 
 /* ── How-it-works steps ────────────────────────────────────────── */

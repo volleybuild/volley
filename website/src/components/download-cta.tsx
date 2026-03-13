@@ -12,7 +12,7 @@ export function DownloadCta() {
         <div className="reveal">
           <div className="w-8 h-px bg-gradient-to-r from-transparent via-accent-bright/30 to-transparent mx-auto mb-10" />
           <p className="text-vo-text-muted text-sm mb-3">
-            We built Volley because we wanted it to exist.
+            Open source and actively developed.
           </p>
           <h2 className="font-display font-bold text-3xl md:text-4xl text-white tracking-tight mb-3">
             Give it a try.
