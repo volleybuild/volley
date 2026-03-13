@@ -1,9 +1,14 @@
 import { create } from "zustand";
 import type { Toast } from "./types";
+import type { SoundName } from "../services/sound-service";
 
 let toastIdCounter = 0;
 
+export type SoundSettings = Record<SoundName, boolean>;
+
 interface UiStore {
+  soundEnabled: boolean;
+  soundSettings: SoundSettings;
   fileTreeBasePath: string;
   fileViewerOpen: boolean;
   fileViewerPath: string;
@@ -79,10 +84,21 @@ interface UiStore {
   setTodoViewMode: (mode: "list" | "type") => void;
   toggleFolder: (folderId: string) => void;
   setSidebarSearch: (q: string) => void;
+  toggleSound: () => void;
+  toggleSoundEvent: (event: SoundName) => void;
+  loadSoundSettings: () => void;
 }
 
 function createUiStore() {
   return create<UiStore>((set, get) => ({
+  soundEnabled: true,
+  soundSettings: {
+    sessionStarted: true,
+    sessionPaused: true,
+    agentWaiting: true,
+    agentDone: true,
+    sessionError: true,
+  },
   fileTreeBasePath: "",
   fileViewerOpen: false,
   fileViewerPath: "",
@@ -194,6 +210,25 @@ function createUiStore() {
     return { collapsedFolders: next };
   }),
   setSidebarSearch: (q) => set({ sidebarSearch: q }),
+
+  toggleSound: () => {
+    const next = !get().soundEnabled;
+    set({ soundEnabled: next });
+    window.volley.settings.setUser({ sound: { enabled: next, events: get().soundSettings } });
+  },
+  toggleSoundEvent: (event) => {
+    const nextSettings = { ...get().soundSettings, [event]: !get().soundSettings[event] };
+    set({ soundSettings: nextSettings });
+    window.volley.settings.setUser({ sound: { enabled: get().soundEnabled, events: nextSettings } });
+  },
+  loadSoundSettings: () => {
+    window.volley.settings.getUser().then((s: any) => {
+      if (s.sound) {
+        if (typeof s.sound.enabled === "boolean") set({ soundEnabled: s.sound.enabled });
+        if (s.sound.events) set({ soundSettings: { ...get().soundSettings, ...s.sound.events } });
+      }
+    });
+  },
 }));
 }
 

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useAgentStore } from "../store/agent-store";
 import type { AgentMessage } from "../types/agent";
+import { playSound } from "../services/sound-service";
 
 /** Parse an SDK message into renderer-friendly AgentMessage(s) */
 export function parseSDKMessage(sdkMsg: any): AgentMessage[] {
@@ -109,12 +110,15 @@ export function useAgentListeners() {
       // Update status
       const status = deriveStatus(message);
       if (status) {
+        const prevStatus = store.status[sessionId];
         store.setStatus(sessionId, status);
+        if (status === "waiting" && prevStatus !== "waiting") playSound("agentWaiting");
       }
     });
 
     window.volley.agent.onDone(({ sessionId }) => {
       useAgentStore.getState().setStatus(sessionId, "idle");
+      playSound("agentDone");
     });
 
     window.volley.agent.onError(({ sessionId, error }) => {
