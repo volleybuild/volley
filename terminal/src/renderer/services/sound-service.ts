@@ -53,10 +53,24 @@ function playSessionPaused(ctx: AudioContext) {
   bubble(ctx, 352, now, 0.045, 0.3);
 }
 
-/** Tiny high bubble tap */
+/** Curious rising "huh?" — low tone sweeping up */
 function playAgentWaiting(ctx: AudioContext) {
   const now = ctx.currentTime;
-  bubble(ctx, 580, now, 0.04, 0.18);
+  const gain = ctx.createGain();
+  gain.connect(ctx.destination);
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(0.045, now + 0.03);
+  gain.gain.setValueAtTime(0.045, now + 0.22);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+
+  const osc = ctx.createOscillator();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(310, now);        // start low
+  osc.frequency.setValueAtTime(300, now + 0.08);  // dip slightly
+  osc.frequency.exponentialRampToValueAtTime(480, now + 0.28); // rise up
+  osc.connect(gain);
+  osc.start(now);
+  osc.stop(now + 0.38);
 }
 
 /** Gentle two-bubble chord */
