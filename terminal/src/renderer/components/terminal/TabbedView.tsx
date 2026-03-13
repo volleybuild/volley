@@ -11,6 +11,7 @@ import PrFormPane from "./PrFormPane";
 import FileTreePanel from "../file-browser/FileTreePanel";
 import AgentPane from "../agent/AgentPane";
 import TodoPane from "./TodoPane";
+import PausedPane from "./PausedPane";
 
 export default function TabbedView() {
   const sessions = useSessionStore((s) => s.sessions);
@@ -54,11 +55,23 @@ export default function TabbedView() {
         {Array.from(sessions.keys()).map((id) => {
           const session = sessions.get(id);
           const isPending = session?.status === "pending";
+          const isPaused = session?.status === "paused";
           const isTodo = session?.lifecycle === "todo";
 
           if (isPending) {
             return (
               <SetupPane
+                key={id}
+                sessionId={id}
+                visible={id === activeSessionId}
+                className="absolute inset-0"
+              />
+            );
+          }
+
+          if (isPaused) {
+            return (
+              <PausedPane
                 key={id}
                 sessionId={id}
                 visible={id === activeSessionId}

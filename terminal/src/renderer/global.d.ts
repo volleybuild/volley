@@ -65,6 +65,8 @@ interface VolleyApi {
     write(sessionId: string, data: string): void;
     resize(sessionId: string, cols: number, rows: number): void;
     kill(sessionId: string): void;
+    pause(sessionId: string): void;
+    resume(sessionId: string): void;
     onData(callback: (payload: { sessionId: string; data: string }) => void): void;
     onExit(callback: (payload: { sessionId: string; exitCode: number; signal: number }) => void): void;
   };
@@ -86,6 +88,7 @@ interface VolleyApi {
     createTodo(task: string, opts?: { todoType?: TodoType; description?: string; sourceNoteId?: string }): Promise<{ ok: boolean; id?: string; error?: string }>;
     updateTodo(sessionId: string, updates: { task?: string; todoType?: TodoType; description?: string }): Promise<{ ok: boolean; error?: string }>;
     startTodo(sessionId: string, baseBranch?: string): void;
+    cancelSetup(pendingId: string): void;
     complete(sessionId: string, mergedTo?: string): Promise<{ ok: boolean; error?: string }>;
     delete(sessionId: string): Promise<{ ok: boolean; error?: string }>;
     reorder(ids: string[], lifecycle: string): Promise<{ ok: boolean; error?: string }>;

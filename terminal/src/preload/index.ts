@@ -19,6 +19,12 @@ contextBridge.exposeInMainWorld("volley", {
     kill(sessionId: string): void {
       ipcRenderer.send("pty:kill", { sessionId });
     },
+    pause(sessionId: string): void {
+      ipcRenderer.send("session:pause", { sessionId });
+    },
+    resume(sessionId: string): void {
+      ipcRenderer.send("session:resume", { sessionId });
+    },
     onData(callback: (payload: { sessionId: string; data: string }) => void): void {
       ipcRenderer.on("pty:data", (_event, payload) => callback(payload));
     },
@@ -76,6 +82,9 @@ contextBridge.exposeInMainWorld("volley", {
     },
     startTodo(sessionId: string, baseBranch?: string): void {
       ipcRenderer.send("session:start-todo", { sessionId, baseBranch });
+    },
+    cancelSetup(pendingId: string): void {
+      ipcRenderer.send("session:cancel-setup", { pendingId });
     },
     complete(sessionId: string, mergedTo?: string): Promise<{ ok: boolean; error?: string }> {
       return ipcRenderer.invoke("session:complete", { sessionId, mergedTo });

@@ -33,6 +33,9 @@ export function useIpcListeners() {
 
     window.volley.pty.onExit(({ sessionId, exitCode }) => {
       const store = useSessionStore.getState();
+      const session = store.sessions.get(sessionId);
+      // Ignore exit events for paused sessions — the PTY was killed intentionally
+      if (session?.status === "paused") return;
       store.setStatus(sessionId, "exited");
       store.setExitCode(sessionId, typeof exitCode === "number" ? exitCode : 1);
     });

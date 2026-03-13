@@ -165,6 +165,8 @@ export default function Sidebar() {
   const moveNoteToFolder = useNoteStore((s) => s.moveNoteToFolder);
   const extractions = useNoteStore((s) => s.extractions);
   const removeSession = useSessionStore((s) => s.removeSession);
+  const pauseSession = useSessionStore((s) => s.pauseSession);
+  const resumeSession = useSessionStore((s) => s.resumeSession);
 
   const [filterOpen, setFilterOpen] = useState(false);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -250,6 +252,24 @@ export default function Sidebar() {
   const handleDeleteTodo = async (sessionId: string) => {
     await window.volley.session.delete(sessionId);
     removeSession(sessionId);
+  };
+
+  const handlePauseSession = (sessionId: string) => {
+    pauseSession(sessionId);
+  };
+
+  const handleResumeSession = (sessionId: string) => {
+    resumeSession(sessionId);
+  };
+
+  const handleRemoveSession = async (sessionId: string) => {
+    await window.volley.session.remove(sessionId);
+    removeSession(sessionId);
+  };
+
+  const handleCancelSetup = (pendingId: string) => {
+    window.volley.session.cancelSetup(pendingId);
+    removeSession(pendingId);
   };
 
   const handleDeleteNote = async (noteId: string) => {
@@ -725,6 +745,10 @@ export default function Sidebar() {
                 session={session}
                 isActive={session.id === activeSessionId && !activeNoteId}
                 onClick={() => handleSessionClick(session.id)}
+                onPause={() => handlePauseSession(session.id)}
+                onResume={() => handleResumeSession(session.id)}
+                onRemove={() => handleRemoveSession(session.id)}
+                onCancelSetup={() => handleCancelSetup(session.id)}
               />
             ))}
           </SidebarSection>
@@ -745,6 +769,7 @@ export default function Sidebar() {
                 session={session}
                 isActive={session.id === activeSessionId && !activeNoteId}
                 onClick={() => handleSessionClick(session.id)}
+                onRemove={() => handleRemoveSession(session.id)}
               />
             ))}
           </SidebarSection>
