@@ -1,5 +1,6 @@
 import React from "react";
 import IconButton from "../shared/IconButton";
+import VolleyLoader from "../shared/VolleyLoader";
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -26,9 +27,10 @@ interface Props {
   onDragEnd?: (e: React.DragEvent) => void;
   isDragOver?: boolean;
   indented?: boolean;
+  extracting?: boolean;
 }
 
-export default function NoteItem({ note, isActive, onClick, onDelete, onArchive, draggable, onDragStart, onDragOver, onDrop, onDragEnd, isDragOver, indented }: Props) {
+export default function NoteItem({ note, isActive, onClick, onDelete, onArchive, draggable, onDragStart, onDragOver, onDrop, onDragEnd, isDragOver, indented, extracting }: Props) {
   const isArchived = note.status === "archived";
 
   return (
@@ -65,12 +67,17 @@ export default function NoteItem({ note, isActive, onClick, onDelete, onArchive,
 
       <div className="flex flex-col gap-0.5 overflow-hidden min-w-0 flex-1">
         <div className="flex items-center justify-between gap-1">
-          <span
-            className={`truncate font-medium leading-snug ${
-              isActive ? "text-gray-100" : "text-gray-400"
-            }`}
-          >
-            {note.title || "Untitled"}
+          <span className="flex items-center gap-1.5 min-w-0">
+            <span
+              className={`truncate font-medium leading-snug ${
+                isActive ? "text-gray-100" : "text-gray-400"
+              }`}
+            >
+              {note.title || "Untitled"}
+            </span>
+            {extracting && (
+              <VolleyLoader size="xs" className="flex-shrink-0" />
+            )}
           </span>
           <span className="flex items-center gap-0.5 flex-shrink-0 h-5">
             {/* Timestamp — hidden on hover when actions show */}

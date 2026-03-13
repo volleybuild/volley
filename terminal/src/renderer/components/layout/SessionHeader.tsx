@@ -112,12 +112,22 @@ export default function SessionHeader() {
       <StatusDot status={session.status} className="w-2 h-2" />
       <span className="text-gray-200 font-medium">{session.slug}</span>
       <span className="text-gray-700 mx-0.5">·</span>
-      <div className="flex items-center gap-1.5 text-gray-500">
-        <span className="text-gray-400">{session.branch}</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-600">
+      <div className="flex items-center gap-1.5">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.06] text-[11px] font-mono text-gray-400 max-w-[200px]">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0">
+            <circle cx="12" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M12 8v4m0 0l-6 6m6-6l6 6"/>
+          </svg>
+          <span className="truncate">{session.branch}</span>
+        </span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-600 flex-shrink-0">
           <path d="M5 12h14M12 5l7 7-7 7" />
         </svg>
-        <span className="text-gray-500">{baseBranch}</span>
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.06] text-[11px] font-mono text-gray-500 max-w-[200px]">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0">
+            <circle cx="12" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M12 8v4m0 0l-6 6m6-6l6 6"/>
+          </svg>
+          <span className="truncate">{baseBranch}</span>
+        </span>
       </div>
       <span className="flex-1" />
 

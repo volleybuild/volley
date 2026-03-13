@@ -28,9 +28,7 @@ export default function SettingsView() {
   const [claudeLoggedIn, setClaudeLoggedIn] = useState(false);
   const [claudeEmail, setClaudeEmail] = useState<string | undefined>();
 
-  // ── Planning state ──────────────────────────────────────────────────────
-  const planningEnabled = useUiStore((s) => s.planningEnabled);
-  const setPlanningEnabled = useUiStore((s) => s.setPlanningEnabled);
+  // ── Project context state ───────────────────────────────────────────────
   const [analyzeStatus, setAnalyzeStatus] = useState<"idle" | "analyzing" | "done" | "failed">("idle");
   const [analyzeError, setAnalyzeError] = useState("");
   const [contextExists, setContextExists] = useState(false);
@@ -110,12 +108,6 @@ export default function SettingsView() {
       setTestStatus("error");
       setTestError(result.error || "Connection failed");
     }
-  };
-
-  // ── Planning handlers ────────────────────────────────────────────────
-  const handlePlanningToggle = async (enabled: boolean) => {
-    setPlanningEnabled(enabled);
-    await window.volley.settings.setUser({ planning: { enabled } } as any);
   };
 
   const handleAnalyzeProject = async () => {
@@ -340,30 +332,10 @@ export default function SettingsView() {
           )}
         </section>
 
-        {/* ── AI Planning Section ──────────────────────────────────── */}
+        {/* ── Project Context Section ──────────────────────────────── */}
         <section className="bg-vo-surface rounded-lg border border-vo-border p-4 space-y-3">
-          <h2 className="text-xs font-medium text-gray-300 uppercase tracking-wider">AI Planning</h2>
-          <p className="text-[11px] text-gray-500 leading-relaxed">
-            Generate implementation plans for todos by analyzing your codebase with AI.
-          </p>
-          <label className="flex items-center gap-2.5 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={planningEnabled}
-              onChange={(e) => handlePlanningToggle(e.target.checked)}
-              className="w-3.5 h-3.5 rounded border border-white/[0.15] bg-white/[0.04] checked:bg-accent-bright/30 checked:border-accent-bright/50 accent-accent-bright cursor-pointer"
-            />
-            <span className="text-[12px] text-gray-400 group-hover:text-gray-300 transition-colors">
-              Enable AI planning
-            </span>
-          </label>
-          <p className="text-[10px] text-gray-600 leading-relaxed">
-            When enabled, "Plan" buttons appear on todos to generate implementation plans.
-            Plans are always user-initiated and never run automatically.
-          </p>
-
-          {/* Project Context */}
-          <div className="border-t border-vo-border pt-3 space-y-2">
+          <h2 className="text-xs font-medium text-gray-300 uppercase tracking-wider">Project Context</h2>
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div>
                 <label className="text-[11px] text-gray-500">Project context</label>
@@ -394,7 +366,7 @@ export default function SettingsView() {
             )}
             <p className="text-[10px] text-gray-600 leading-relaxed">
               Analyzes your project structure and writes a context summary to <code className="text-gray-500 bg-vo-base rounded px-1 py-0.5">.volley/context.md</code>.
-              Planning agents use this for faster, more accurate results.
+              AI agents use this for faster, more accurate results.
             </p>
           </div>
         </section>

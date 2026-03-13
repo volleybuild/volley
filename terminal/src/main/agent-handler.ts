@@ -150,7 +150,8 @@ export function registerAgentHandlers(getRepoRoot: () => string | null, getMainW
   });
 
   // ── agent:send ─────────────────────────────────────────────────────────
-  ipcMain.on("agent:send", async (_event, { sessionId, prompt, images }: { sessionId: string; prompt: string; images?: { base64: string; mediaType: string }[] }) => {
+  ipcMain.on("agent:send", async (_event, { sessionId, prompt: initialPrompt, images }: { sessionId: string; prompt: string; images?: { base64: string; mediaType: string }[] }) => {
+    let prompt = initialPrompt;
     const mainWindow = getMainWindow();
     if (!mainWindow) return;
 
@@ -178,6 +179,19 @@ export function registerAgentHandlers(getRepoRoot: () => string | null, getMainW
     // Load cached messages if we have none
     if (agentState.messages.length === 0) {
       agentState.messages = loadMessageCache(repoRoot, sessionId);
+    }
+
+    // Auto-inject brainstorm prompt on first message
+    if (!agentState.agentSessionId && agentState.messages.length === 0) {
+      const brainstormPath = path.join(repoRoot, ".volley", "sessions", sessionId, "brainstorm.md");
+      if (fs.existsSync(brainstormPath)) {
+        try {
+          const brainstormContent = fs.readFileSync(brainstormPath, "utf-8");
+          prompt = brainstormContent + "\n\n---\n\n" + prompt;
+          // Rename to prevent re-injection
+          fs.renameSync(brainstormPath, brainstormPath + ".used");
+        } catch { /* ignore */ }
+      }
     }
 
     // Persist the user's prompt so it survives restart

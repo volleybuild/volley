@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -18,8 +18,13 @@ export default function NoteEditor({ noteId }: Props) {
   const archiveNote = useNoteStore((s) => s.archiveNote);
   const unarchiveNote = useNoteStore((s) => s.unarchiveNote);
   const deleteNote = useNoteStore((s) => s.deleteNote);
+  const extraction = useNoteStore((s) => s.extractions[noteId]);
+  const startExtraction = useNoteStore((s) => s.startExtraction);
+  const clearExtraction = useNoteStore((s) => s.clearExtraction);
   const [title, setTitle] = useState(note?.title ?? "");
-  const [showDrafts, setShowDrafts] = useState(false);
+  const [panelHeight, setPanelHeight] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
   const { save, flush } = useAutoSave(noteId);
 
   // Sync title from store when note changes
@@ -66,15 +71,41 @@ export default function NoteEditor({ noteId }: Props) {
     deleteNote(noteId);
   }, [noteId, deleteNote]);
 
+  const handlePanelResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+    document.body.style.cursor = "row-resize";
+    document.body.style.userSelect = "none";
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current || !containerRef.current) return;
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const newHeight = Math.max(120, Math.min(containerRect.bottom - e.clientY, containerRect.height - 120));
+      setPanelHeight(newHeight);
+    };
+
+    const handleMouseUp = () => {
+      isDragging.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  }, []);
+
   const handleExtractTodos = useCallback(() => {
     // Flush any pending auto-save, then save current content before extracting
     flush();
+    let content = note?.content ?? "";
     if (editor) {
-      const content = JSON.stringify(editor.getJSON());
+      content = JSON.stringify(editor.getJSON());
       updateNote(noteId, { content });
     }
-    setShowDrafts(true);
-  }, [flush, editor, noteId, updateNote]);
+    startExtraction(noteId, content);
+  }, [flush, editor, noteId, updateNote, startExtraction, note?.content]);
 
   if (!note) {
     return (
@@ -87,7 +118,7 @@ export default function NoteEditor({ noteId }: Props) {
   const isArchived = note.status === "archived";
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div ref={containerRef} className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.06] flex-shrink-0">
         <svg
@@ -114,7 +145,8 @@ export default function NoteEditor({ noteId }: Props) {
         <div className="flex items-center gap-2">
           <button
             onClick={handleExtractTodos}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium transition-colors bg-accent-bright/10 text-accent-bright border border-accent-bright/20 hover:bg-accent-bright/15 hover:border-accent-bright/30"
+            disabled={extraction?.status === "extracting"}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium transition-colors bg-accent-bright/10 text-accent-bright border border-accent-bright/20 hover:bg-accent-bright/15 hover:border-accent-bright/30 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -188,19 +220,29 @@ export default function NoteEditor({ noteId }: Props) {
       )}
 
       {/* Editor */}
-      <div className={`overflow-y-auto px-5 py-4 note-editor-container ${showDrafts ? "max-h-[50%]" : "flex-1"}`}>
+      <div className="overflow-y-auto px-5 py-4 note-editor-container flex-1 min-h-[120px]">
         <EditorContent editor={editor} />
       </div>
 
       {/* Draft Todos Panel */}
-      {showDrafts && (
-        <div className="flex-1 min-h-0">
-          <DraftTodosPanel
-            noteId={noteId}
-            noteContent={note.content}
-            onDone={() => setShowDrafts(false)}
-          />
-        </div>
+      {extraction && (
+        <>
+          {/* Resize handle */}
+          <div
+            className="flex-shrink-0 h-px hover:h-1 bg-white/[0.06] hover:bg-accent-bright/30 cursor-row-resize transition-all relative z-10"
+            onMouseDown={handlePanelResizeStart}
+          >
+            <div className="absolute -top-1 -bottom-1 inset-x-0" />
+          </div>
+          <div className="min-h-0 flex-shrink-0" style={panelHeight ? { height: panelHeight } : { flex: 1 }}>
+            <DraftTodosPanel
+              noteId={noteId}
+              noteTitle={note.title}
+              onDone={() => clearExtraction(noteId)}
+              onRetry={handleExtractTodos}
+            />
+          </div>
+        </>
       )}
     </div>
   );

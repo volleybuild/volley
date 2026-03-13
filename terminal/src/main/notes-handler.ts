@@ -283,4 +283,37 @@ export function registerNotesHandlers(getRepoRoot: () => string | null): void {
       return { ok: false, error: err.message };
     }
   });
+
+  // ── Extraction state persistence ──────────────────────────────────────
+
+  function extractionsPath(): string | null {
+    const root = getRepoRoot();
+    if (!root) return null;
+    return path.join(root, ".volley", "extractions.json");
+  }
+
+  ipcMain.handle("notes:extractions-load", () => {
+    const p = extractionsPath();
+    if (!p) return { extractions: {} };
+    try {
+      const raw = fs.readFileSync(p, "utf-8");
+      return JSON.parse(raw);
+    } catch {
+      return { extractions: {} };
+    }
+  });
+
+  ipcMain.handle("notes:extractions-save", (_event, { extractions }: { extractions: Record<string, any> }) => {
+    const p = extractionsPath();
+    if (!p) return { ok: false };
+    try {
+      const dir = path.dirname(p);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(p, JSON.stringify({ extractions }, null, 2));
+      return { ok: true };
+    } catch (err: any) {
+      logError("notes: failed to save extractions:", err.message);
+      return { ok: false };
+    }
+  });
 }

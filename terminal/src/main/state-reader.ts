@@ -3,7 +3,6 @@ import * as path from "node:path";
 
 export type SessionLifecycle = "todo" | "in_progress" | "completed";
 export type TodoType = "bug" | "feature" | "improvement";
-export type PlanStatus = "pending" | "planning" | "ready" | "failed";
 
 export interface Folder {
   id: string;
@@ -26,7 +25,7 @@ export interface SessionState {
   agentSessionId?: string;
   todoType?: TodoType;
   description?: string;
-  planStatus?: PlanStatus;
+  planStatus?: string;
   planMarkdown?: string;
   sourceNoteId?: string | null;
   folderId?: string | null;

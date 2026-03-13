@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useSessionStore } from "../../store/session-store";
 import { useUiStore } from "../../store/ui-store";
 import { useNoteStore } from "../../store/note-store";
-import type { TodoType, PlanStatus } from "../../store/types";
+import type { TodoType } from "../../store/types";
 
 interface Props {
   sessionId: string;
@@ -32,59 +32,6 @@ const TYPE_CONFIG: Record<TodoType, { label: string; color: string; bg: string; 
     icon: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
   },
 };
-
-function PlanStatusIndicator({ status }: { status?: PlanStatus }) {
-  if (!status) return null;
-
-  const configs: Record<PlanStatus, { symbol: string; label: string; className: string }> = {
-    pending: { symbol: "\u25CC", label: "Plan pending", className: "text-gray-500" },
-    planning: { symbol: "\u25D1", label: "Planning...", className: "text-accent-bright animate-pulse" },
-    ready: { symbol: "\u25CF", label: "Plan ready", className: "text-green-400" },
-    failed: { symbol: "\u2715", label: "Plan failed", className: "text-red-400" },
-  };
-
-  const cfg = configs[status];
-
-  return (
-    <span className={`inline-flex items-center gap-1.5 text-xs ${cfg.className}`} title={cfg.label}>
-      <span className="text-sm">{cfg.symbol}</span>
-      <span>{cfg.label}</span>
-    </span>
-  );
-}
-
-function PlanMarkdownView({ markdown }: { markdown: string }) {
-  // Simple markdown section parser
-  const sections = markdown.split(/^(## .+)$/m).filter(Boolean);
-  const parsed: { heading?: string; content: string }[] = [];
-
-  for (let i = 0; i < sections.length; i++) {
-    const s = sections[i].trim();
-    if (s.startsWith("## ")) {
-      parsed.push({ heading: s.replace("## ", ""), content: sections[i + 1]?.trim() || "" });
-      i++; // skip content block
-    } else if (parsed.length === 0) {
-      parsed.push({ content: s });
-    }
-  }
-
-  return (
-    <div className="w-full space-y-3">
-      {parsed.map((section, i) => (
-        <div key={i}>
-          {section.heading && (
-            <h3 className="text-[11px] font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
-              {section.heading}
-            </h3>
-          )}
-          <div className="text-[12px] text-gray-400 leading-relaxed whitespace-pre-wrap">
-            {section.content}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function EditableTitle({ value, onSave }: { value: string; onSave: (v: string) => void }) {
   const [editing, setEditing] = useState(false);
@@ -160,16 +107,10 @@ function EditableDescription({ value, onSave }: { value: string; onSave: (v: str
 
 export default function TodoPane({ sessionId, visible, className = "" }: Props) {
   const session = useSessionStore((s) => s.sessions.get(sessionId));
-  const planningEnabled = useUiStore((s) => s.planningEnabled);
   const addToast = useUiStore((s) => s.addToast);
   const updateSessionTask = useSessionStore((s) => s.updateSessionTask);
   const updateSessionDescription = useSessionStore((s) => s.updateSessionDescription);
   const updateSessionTodoType = useSessionStore((s) => s.updateSessionTodoType);
-  const updateSessionPlan = useSessionStore((s) => s.updateSessionPlan);
-
-  const [editingPlan, setEditingPlan] = useState(false);
-  const [planDraft, setPlanDraft] = useState("");
-  const planTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   if (!session) return null;
 
@@ -182,17 +123,6 @@ export default function TodoPane({ sessionId, visible, className = "" }: Props) 
 
   const handleDelete = async () => {
     await window.volley.session.delete(sessionId);
-  };
-
-  const handlePlan = async () => {
-    const result = await window.volley.planning.planOne(sessionId);
-    if (!result.ok) {
-      addToast(result.error || "Failed to start planning", "error");
-    }
-  };
-
-  const handleCancelPlan = async () => {
-    await window.volley.planning.cancel(sessionId);
   };
 
   const handleSaveTitle = (task: string) => {
@@ -211,26 +141,6 @@ export default function TodoPane({ sessionId, visible, className = "" }: Props) 
     updateSessionTodoType(sessionId, next);
     window.volley.session.updateTodo(sessionId, { todoType: next });
   };
-
-  const handleEditPlan = () => {
-    setPlanDraft(session.planMarkdown || "");
-    setEditingPlan(true);
-    setTimeout(() => planTextareaRef.current?.focus(), 0);
-  };
-
-  const handleSavePlan = () => {
-    setEditingPlan(false);
-    const trimmed = planDraft.trim();
-    if (trimmed !== (session.planMarkdown || "").trim()) {
-      updateSessionPlan(sessionId, trimmed);
-      window.volley.session.updatePlan(sessionId, trimmed);
-    }
-  };
-
-  const showPlanButton = planningEnabled && (!session.planStatus || session.planStatus === "pending");
-  const showCancelButton = session.planStatus === "planning";
-  const showRetryButton = planningEnabled && session.planStatus === "failed";
-  const showReplanButton = planningEnabled && session.planStatus === "ready";
 
   return (
     <div
@@ -251,89 +161,8 @@ export default function TodoPane({ sessionId, visible, className = "" }: Props) 
         {/* Title — click to edit */}
         <EditableTitle value={session.task} onSave={handleSaveTitle} />
 
-        {/* Plan status — hide "pending" when planning is disabled */}
-        {session.planStatus && (planningEnabled || session.planStatus !== "pending") && (
-          <PlanStatusIndicator status={session.planStatus} />
-        )}
-
-        {/* Hint when planning is disabled but todo has pending plan */}
-        {!planningEnabled && session.planStatus === "pending" && (
-          <button
-            onClick={() => useUiStore.getState().openSettings()}
-            className="text-[11px] text-gray-600 hover:text-gray-400 transition-colors cursor-pointer underline underline-offset-2"
-          >
-            Enable AI Planning in Settings to generate plans
-          </button>
-        )}
-
         {/* Description — always shown, editable */}
         <EditableDescription value={session.description || ""} onSave={handleSaveDescription} />
-
-        {/* Plan markdown */}
-        {session.planStatus === "ready" && session.planMarkdown && (
-          <div className="w-full rounded-lg bg-white/[0.03] border border-accent-bright/[0.15] px-4 py-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">Plan</span>
-              <button
-                className="text-[10px] text-gray-500 hover:text-gray-300 transition-colors cursor-pointer"
-                onClick={editingPlan ? handleSavePlan : handleEditPlan}
-              >
-                {editingPlan ? "Save" : "Edit"}
-              </button>
-            </div>
-            {editingPlan ? (
-              <textarea
-                ref={planTextareaRef}
-                className="w-full text-[12px] text-gray-400 leading-relaxed bg-transparent outline-none resize-none font-mono min-h-[200px]"
-                value={planDraft}
-                onChange={(e) => setPlanDraft(e.target.value)}
-                onBlur={handleSavePlan}
-                onKeyDown={(e) => { if (e.key === "Escape") { setEditingPlan(false); } }}
-              />
-            ) : (
-              <PlanMarkdownView markdown={session.planMarkdown} />
-            )}
-          </div>
-        )}
-
-        {/* Planning animation */}
-        {session.planStatus === "planning" && (
-          <div className="w-full rounded-lg bg-white/[0.03] border border-accent-bright/[0.1] px-4 py-4 flex items-center gap-3">
-            <div className="flex gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent-bright animate-bounce" style={{ animationDelay: "0ms" }} />
-              <span className="w-1.5 h-1.5 rounded-full bg-accent-bright animate-bounce" style={{ animationDelay: "150ms" }} />
-              <span className="w-1.5 h-1.5 rounded-full bg-accent-bright animate-bounce" style={{ animationDelay: "300ms" }} />
-            </div>
-            <span className="text-[12px] text-accent-bright/80">Generating implementation plan...</span>
-          </div>
-        )}
-
-        {/* Failed state */}
-        {session.planStatus === "failed" && (
-          <div className="w-full rounded-lg bg-red-500/[0.05] border border-red-500/[0.15] px-4 py-3 space-y-1.5">
-            <p className="text-[12px] text-red-400 font-medium">Plan generation failed</p>
-            {session.planError && (
-              <p className="text-[11px] text-red-400/70 font-mono break-all">{session.planError}</p>
-            )}
-            <p className="text-[10px] text-gray-500">
-              Check your AI configuration in{" "}
-              <button
-                onClick={() => useUiStore.getState().openSettings()}
-                className="text-gray-400 hover:text-gray-300 underline underline-offset-2 cursor-pointer"
-              >
-                Settings
-              </button>
-              {" "}or view the{" "}
-              <button
-                onClick={() => window.volley.config.openLogFile()}
-                className="text-gray-400 hover:text-gray-300 underline underline-offset-2 cursor-pointer"
-              >
-                log file
-              </button>
-              {" "}for details.
-            </p>
-          </div>
-        )}
 
         {/* Source note link */}
         {session.sourceNoteId && (
@@ -348,38 +177,6 @@ export default function TodoPane({ sessionId, visible, className = "" }: Props) 
           >
             Start
           </button>
-          {showPlanButton && (
-            <button
-              onClick={handlePlan}
-              className="px-4 py-1.5 rounded-md bg-blue-500/10 text-blue-400 text-[12px] font-medium hover:bg-blue-500/20 transition-colors cursor-pointer border border-blue-500/20"
-            >
-              Plan
-            </button>
-          )}
-          {showCancelButton && (
-            <button
-              onClick={handleCancelPlan}
-              className="px-4 py-1.5 rounded-md bg-yellow-500/10 text-yellow-400 text-[12px] font-medium hover:bg-yellow-500/20 transition-colors cursor-pointer border border-yellow-500/20"
-            >
-              Cancel
-            </button>
-          )}
-          {showRetryButton && (
-            <button
-              onClick={handlePlan}
-              className="px-4 py-1.5 rounded-md bg-blue-500/10 text-blue-400 text-[12px] font-medium hover:bg-blue-500/20 transition-colors cursor-pointer border border-blue-500/20"
-            >
-              Retry
-            </button>
-          )}
-          {showReplanButton && (
-            <button
-              onClick={handlePlan}
-              className="px-4 py-1.5 rounded-md bg-white/[0.04] text-gray-400 text-[12px] font-medium hover:text-gray-300 hover:bg-white/[0.06] transition-colors cursor-pointer border border-white/[0.06]"
-            >
-              Re-plan
-            </button>
-          )}
           <button
             onClick={handleDelete}
             className="px-4 py-1.5 rounded-md bg-white/[0.04] text-gray-500 text-[12px] font-medium hover:text-red-400 hover:bg-red-500/[0.08] transition-colors cursor-pointer border border-white/[0.06]"

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useSessionStore } from "../../store/session-store";
 import { useElapsedTick } from "../../hooks/use-elapsed-tick";
 import { formatElapsed } from "../../utils/format";
+import VolleyLoader from "../shared/VolleyLoader";
 
 interface Props {
   sessionId: string;
@@ -43,9 +44,7 @@ export default function SetupPane({ sessionId, visible, className = "" }: Props)
             <line x1="9" y1="9" x2="15" y2="15" />
           </svg>
         ) : (
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-accent-bright animate-spin" style={{ animationDuration: "1.5s" }}>
-            <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
-          </svg>
+          <VolleyLoader size="sm" />
         )}
 
         {/* Task name + elapsed */}

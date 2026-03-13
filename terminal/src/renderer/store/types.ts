@@ -3,7 +3,6 @@ import type { FitAddon } from "@xterm/addon-fit";
 
 export type SessionLifecycle = "todo" | "in_progress" | "completed";
 export type TodoType = "bug" | "feature" | "improvement";
-export type PlanStatus = "pending" | "planning" | "ready" | "failed";
 
 export interface SessionState {
   id: string;
@@ -27,9 +26,6 @@ export interface SessionState {
   setupWarning?: string;
   todoType?: TodoType;
   description?: string;
-  planStatus?: PlanStatus;
-  planMarkdown?: string;
-  planError?: string;
   sourceNoteId?: string | null;
   folderId?: string | null;
 }

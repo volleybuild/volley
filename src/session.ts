@@ -1,6 +1,6 @@
 import { spawn, execSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, symlinkSync, writeFileSync } from "node:fs";
+import { existsSync, symlinkSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import type { Session, VolleyState, SessionStats, TodoType } from "./types.js";
 import { git } from "./utils/git.js";
@@ -289,7 +289,7 @@ export function logSession(id: string): string {
 /**
  * Create a todo session (no worktree/branch yet, just metadata)
  */
-export function createTodoSession(task: string, opts?: { todoType?: TodoType; description?: string; autoPlan?: boolean; sourceNoteId?: string }): Session {
+export function createTodoSession(task: string, opts?: { todoType?: TodoType; description?: string; sourceNoteId?: string }): Session {
   const repoRoot = getRepoRoot();
   const volleyDir = getWorktreeDir(repoRoot);
   ensureDir(volleyDir);
@@ -314,7 +314,6 @@ export function createTodoSession(task: string, opts?: { todoType?: TodoType; de
     createdAt: new Date().toISOString(),
     todoType: opts?.todoType || "feature",
     description: opts?.description || undefined,
-    planStatus: opts?.autoPlan !== false ? "pending" : undefined,
     sourceNoteId: opts?.sourceNoteId || undefined,
   };
 
@@ -327,7 +326,7 @@ export function createTodoSession(task: string, opts?: { todoType?: TodoType; de
 /**
  * Update a todo session's fields
  */
-export function updateTodoSession(id: string, updates: { task?: string; todoType?: TodoType; description?: string; planStatus?: string }): Session {
+export function updateTodoSession(id: string, updates: { task?: string; todoType?: TodoType; description?: string }): Session {
   const state = loadState();
   const session = state.sessions.find((s) => s.id === id);
   if (!session) throw new Error(`Session "${id}" not found.`);
@@ -338,7 +337,6 @@ export function updateTodoSession(id: string, updates: { task?: string; todoType
   if (updates.task !== undefined) session.task = updates.task;
   if (updates.todoType !== undefined) session.todoType = updates.todoType;
   if (updates.description !== undefined) session.description = updates.description;
-  if (updates.planStatus !== undefined) session.planStatus = updates.planStatus as Session["planStatus"];
   saveState(state);
   return session;
 }
@@ -404,18 +402,6 @@ export function startTodoSession(id: string, branchPrefix = "vo", baseBranchOver
         }
       }
     }
-  }
-
-  // Write plan file if session has description or AI plan
-  const planContent = [
-    session.description ? `# User Notes\n\n${session.description}` : null,
-    session.planMarkdown ? `# Implementation Plan\n\n${session.planMarkdown}` : null,
-  ].filter(Boolean).join("\n\n---\n\n");
-
-  if (planContent) {
-    const plansDir = join(worktreePath, ".volley", "plans");
-    mkdirSync(plansDir, { recursive: true });
-    writeFileSync(join(plansDir, `${id}.md`), planContent);
   }
 
   // Update session to in_progress

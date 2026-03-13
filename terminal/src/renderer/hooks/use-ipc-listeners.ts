@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useSessionStore } from "../store/session-store";
 import { useProjectStore } from "../store/project-store";
-import { useUiStore } from "../store/ui-store";
 import { useNoteStore } from "../store/note-store";
 
 let setupWarningShown = false;
@@ -16,16 +15,6 @@ export function useIpcListeners() {
 
     // Load todo folders
     useSessionStore.getState().fetchTodoFolders();
-
-    // Load planning enabled setting
-    window.volley.settings.getUser().then((settings: any) => {
-      useUiStore.getState().setPlanningEnabled(!!settings.planning?.enabled);
-    });
-
-    // Listen for planning status changes
-    window.volley.planning.onStatusChanged(({ sessionId, planStatus, planMarkdown, error }) => {
-      useSessionStore.getState().updatePlanStatus(sessionId, planStatus, planMarkdown, error);
-    });
 
     // Listen for project switches
     window.volley.project.onSwitched(() => {
@@ -91,6 +80,11 @@ export function useIpcListeners() {
     window.volley.session.onOpened((session) => {
       console.log("[renderer] session:opened", session);
       useSessionStore.getState().addSession(session);
+    });
+
+    window.volley.session.onAutoStart(({ sessionId }) => {
+      console.log("[renderer] session:auto-start", sessionId);
+      window.volley.agent.send(sessionId, "Begin planning this task.");
     });
 
     window.volley.session.onClosed(({ sessionId }) => {

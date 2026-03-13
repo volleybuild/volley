@@ -44,7 +44,6 @@ interface UiStore {
   todoFilterType: "all" | "bug" | "feature" | "improvement";
   todoViewMode: "list" | "type";
   collapsedFolders: Set<string>;
-  planningEnabled: boolean;
   sidebarSearch: string;
 
   setFileTreeBasePath: (basePath: string) => void;
@@ -77,7 +76,6 @@ interface UiStore {
   setTodoFilterType: (type: "all" | "bug" | "feature" | "improvement") => void;
   setTodoViewMode: (mode: "list" | "type") => void;
   toggleFolder: (folderId: string) => void;
-  setPlanningEnabled: (enabled: boolean) => void;
   setSidebarSearch: (q: string) => void;
 }
 
@@ -114,7 +112,6 @@ function createUiStore() {
   todoFilterType: "all" as const,
   todoViewMode: "list" as const,
   collapsedFolders: new Set<string>(),
-  planningEnabled: false,
   sidebarSearch: "",
   rightPaneWidth: 450,
   sidebarWidth: 260,
@@ -192,7 +189,6 @@ function createUiStore() {
     else next.add(folderId);
     return { collapsedFolders: next };
   }),
-  setPlanningEnabled: (enabled) => set({ planningEnabled: enabled }),
   setSidebarSearch: (q) => set({ sidebarSearch: q }),
 }));
 }

@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebglAddon } from "@xterm/addon-webgl";
-import type { SessionState, SessionLifecycle, TodoType, PlanStatus } from "./types";
+import type { SessionState, SessionLifecycle, TodoType } from "./types";
 import { volleyTheme } from "../constants/theme";
 
 interface SessionStore {
@@ -13,7 +13,7 @@ interface SessionStore {
   setupLogs: Record<string, string>;
   todoFolders: FolderData[];
   addSession: (session: VolleySession & { pendingId?: string }) => void;
-  addTodoSession: (session: { id: string; task: string; todoType?: TodoType; description?: string; planStatus?: PlanStatus; sourceNoteId?: string | null; folderId?: string | null }) => void;
+  addTodoSession: (session: { id: string; task: string; todoType?: TodoType; description?: string; sourceNoteId?: string | null; folderId?: string | null }) => void;
   addPendingSession: (pendingId: string, task: string) => void;
   writePendingOutput: (pendingId: string, data: string) => void;
   setPendingFailed: (pendingId: string, error: string) => void;
@@ -31,10 +31,8 @@ interface SessionStore {
   setRunStatus: (sessionId: string, status: SessionState["runStatus"], exitCode?: number) => void;
   setSetupWarning: (sessionId: string, warning: string) => void;
   dismissSetupWarning: (sessionId: string) => void;
-  updatePlanStatus: (sessionId: string, planStatus: string, planMarkdown?: string, planError?: string) => void;
   updateSessionDescription: (sessionId: string, description: string) => void;
   updateSessionTodoType: (sessionId: string, todoType: TodoType) => void;
-  updateSessionPlan: (sessionId: string, planMarkdown: string) => void;
   reorderSessions: (orderedIds: string[], lifecycle: SessionLifecycle) => void;
   clearAllSessions: () => void;
   fetchTodoFolders: () => Promise<void>;
@@ -191,7 +189,7 @@ function createSessionStore() {
     set({ sessions: next, activeSessionId: pendingId, setupLogs: { ...get().setupLogs, [pendingId]: "" } });
   },
 
-  addTodoSession: ({ id, task, todoType, description, planStatus, sourceNoteId, folderId }) => {
+  addTodoSession: ({ id, task, todoType, description, sourceNoteId, folderId }) => {
     const { sessions } = get();
     if (sessions.has(id)) return;
 
@@ -213,7 +211,6 @@ function createSessionStore() {
       runExitCode: null,
       todoType,
       description,
-      planStatus,
       sourceNoteId,
       folderId,
     };
@@ -425,20 +422,6 @@ function createSessionStore() {
     set({ sessions: next });
   },
 
-  updatePlanStatus: (sessionId, planStatus, planMarkdown, planError) => {
-    const { sessions } = get();
-    const session = sessions.get(sessionId);
-    if (!session) return;
-    const next = new Map(sessions);
-    next.set(sessionId, {
-      ...session,
-      planStatus: planStatus as any,
-      ...(planMarkdown !== undefined ? { planMarkdown } : {}),
-      planError: planStatus === "failed" ? planError : undefined,
-    });
-    set({ sessions: next });
-  },
-
   updateSessionDescription: (sessionId, description) => {
     const { sessions } = get();
     const session = sessions.get(sessionId);
@@ -454,15 +437,6 @@ function createSessionStore() {
     if (!session) return;
     const next = new Map(sessions);
     next.set(sessionId, { ...session, todoType });
-    set({ sessions: next });
-  },
-
-  updateSessionPlan: (sessionId, planMarkdown) => {
-    const { sessions } = get();
-    const session = sessions.get(sessionId);
-    if (!session) return;
-    const next = new Map(sessions);
-    next.set(sessionId, { ...session, planMarkdown, planStatus: "ready" as PlanStatus });
     set({ sessions: next });
   },
 

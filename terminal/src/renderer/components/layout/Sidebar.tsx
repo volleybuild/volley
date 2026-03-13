@@ -149,7 +149,6 @@ export default function Sidebar() {
   const setTodoViewMode = useUiStore((s) => s.setTodoViewMode);
   const collapsedFolders = useUiStore((s) => s.collapsedFolders);
   const toggleFolder = useUiStore((s) => s.toggleFolder);
-  const planningEnabled = useUiStore((s) => s.planningEnabled);
   const sidebarSearch = useUiStore((s) => s.sidebarSearch);
   const addToast = useUiStore((s) => s.addToast);
 
@@ -164,6 +163,7 @@ export default function Sidebar() {
   const renameNoteFolder = useNoteStore((s) => s.renameFolder);
   const deleteNoteFolder = useNoteStore((s) => s.deleteFolder);
   const moveNoteToFolder = useNoteStore((s) => s.moveNoteToFolder);
+  const extractions = useNoteStore((s) => s.extractions);
   const removeSession = useSessionStore((s) => s.removeSession);
 
   const [filterOpen, setFilterOpen] = useState(false);
@@ -273,15 +273,6 @@ export default function Sidebar() {
     },
   });
 
-  const hasPendingPlans = allTodoSessions.some(s => s.planStatus === "pending");
-
-  const handlePlanAll = async () => {
-    const result = await window.volley.planning.planAll();
-    if (!result.ok) {
-      addToast(result.error || "Failed to start planning", "error");
-    }
-  };
-
   // ── Notes section: group by folder ─────────────────────────────────────
   const alphaNote = (a: NoteData, b: NoteData) => (a.title || "").localeCompare(b.title || "");
   const ungroupedNotes = activeNotes.filter((n) => !n.folderId).sort(alphaNote);
@@ -373,24 +364,6 @@ export default function Sidebar() {
 
   const filterButton = (
     <div className="relative flex items-center gap-0.5">
-      {planningEnabled && hasPendingPlans && (
-        <IconButton
-          size="md"
-          onClick={(e) => {
-            e.stopPropagation();
-            handlePlanAll();
-          }}
-          title="Plan all pending todos"
-          className="opacity-50 hover:opacity-100 text-blue-400"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="16" y1="13" x2="8" y2="13" />
-            <line x1="16" y1="17" x2="8" y2="17" />
-          </svg>
-        </IconButton>
-      )}
       {viewModeToggle}
       {todoViewMode === "list" && (
         <IconButton
@@ -548,6 +521,7 @@ export default function Sidebar() {
                       onArchive={() => handleArchiveNote(note.id)}
                       draggable
                       indented
+                      extracting={extractions[note.id]?.status === "extracting"}
                       {...makeDragHandlers("notes", note.id, folder.id)}
                     />
                   ))}
@@ -565,6 +539,7 @@ export default function Sidebar() {
                 onDelete={() => handleDeleteNote(note.id)}
                 onArchive={() => handleArchiveNote(note.id)}
                 draggable
+                extracting={extractions[note.id]?.status === "extracting"}
                 {...makeDragHandlers("notes", note.id, null)}
               />
             ))}
@@ -598,6 +573,7 @@ export default function Sidebar() {
                 onClick={() => handleNoteClick(note.id)}
                 onDelete={() => handleDeleteNote(note.id)}
                 draggable
+                extracting={extractions[note.id]?.status === "extracting"}
                 {...makeDragHandlers("archivedNotes", note.id)}
               />
             ))}

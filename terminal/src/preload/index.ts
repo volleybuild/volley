@@ -47,6 +47,9 @@ contextBridge.exposeInMainWorld("volley", {
     onOpened(callback: (session: { id: string; slug: string; branch: string; worktreePath: string; task: string; lifecycle?: string; completedAt?: string; mergedTo?: string; pendingId?: string; todoType?: string; description?: string; planStatus?: string; planMarkdown?: string; sourceNoteId?: string | null; folderId?: string | null }) => void): void {
       ipcRenderer.on("session:opened", (_event, session) => callback(session));
     },
+    onAutoStart(callback: (payload: { sessionId: string }) => void): void {
+      ipcRenderer.on("session:auto-start", (_event, payload) => callback(payload));
+    },
     onClosed(callback: (payload: { sessionId: string }) => void): void {
       ipcRenderer.on("session:closed", (_event, payload) => callback(payload));
     },
@@ -65,7 +68,7 @@ contextBridge.exposeInMainWorld("volley", {
     remove(sessionId: string): Promise<{ ok: boolean; error?: string }> {
       return ipcRenderer.invoke("session:remove", { sessionId });
     },
-    createTodo(task: string, opts?: { todoType?: string; description?: string; autoPlan?: boolean; sourceNoteId?: string }): Promise<{ ok: boolean; id?: string; error?: string }> {
+    createTodo(task: string, opts?: { todoType?: string; description?: string; sourceNoteId?: string }): Promise<{ ok: boolean; id?: string; error?: string }> {
       return ipcRenderer.invoke("session:create-todo", { task, ...opts });
     },
     updateTodo(sessionId: string, updates: { task?: string; todoType?: string; description?: string }): Promise<{ ok: boolean; error?: string }> {
@@ -79,9 +82,6 @@ contextBridge.exposeInMainWorld("volley", {
     },
     delete(sessionId: string): Promise<{ ok: boolean; error?: string }> {
       return ipcRenderer.invoke("session:delete", { sessionId });
-    },
-    updatePlan(sessionId: string, markdown: string): Promise<{ ok: boolean; error?: string }> {
-      return ipcRenderer.invoke("session:update-plan", { sessionId, markdown });
     },
     reorder(ids: string[], lifecycle: string): Promise<{ ok: boolean; error?: string }> {
       return ipcRenderer.invoke("session:reorder", { ids, lifecycle });
@@ -259,21 +259,6 @@ contextBridge.exposeInMainWorld("volley", {
     },
   },
   planning: {
-    planOne(sessionId: string): Promise<{ ok: boolean; error?: string }> {
-      return ipcRenderer.invoke("planning:plan-one", { sessionId });
-    },
-    planAll(): Promise<{ ok: boolean; error?: string }> {
-      return ipcRenderer.invoke("planning:plan-all");
-    },
-    cancel(sessionId: string): Promise<{ ok: boolean; error?: string }> {
-      return ipcRenderer.invoke("planning:cancel", { sessionId });
-    },
-    status(): Promise<{ currentSessionId: string | null; queue: string[] }> {
-      return ipcRenderer.invoke("planning:status");
-    },
-    onStatusChanged(callback: (payload: { sessionId: string; planStatus: string; planMarkdown?: string; error?: string }) => void): void {
-      ipcRenderer.on("planning:status-changed", (_event, payload) => callback(payload));
-    },
     analyzeProject(): Promise<{ ok: boolean; error?: string }> {
       return ipcRenderer.invoke("planning:analyze-project");
     },
@@ -305,6 +290,18 @@ contextBridge.exposeInMainWorld("volley", {
     },
     extractTodos(noteId: string, content: string): Promise<{ ok: boolean; drafts?: any[]; error?: string }> {
       return ipcRenderer.invoke("notes:extract-todos", { noteId, content });
+    },
+    onExtractProgress(callback: (payload: { noteId: string; phase: string }) => void): void {
+      ipcRenderer.on("notes:extract-progress", (_event, payload) => callback(payload));
+    },
+    continueTodos(noteId: string, partialResult: string): Promise<{ ok: boolean; drafts?: any[]; error?: string }> {
+      return ipcRenderer.invoke("notes:continue-extraction", { noteId, partialResult });
+    },
+    loadExtractions(): Promise<{ extractions: Record<string, any> }> {
+      return ipcRenderer.invoke("notes:extractions-load");
+    },
+    saveExtractions(extractions: Record<string, any>): Promise<{ ok: boolean }> {
+      return ipcRenderer.invoke("notes:extractions-save", { extractions });
     },
     addTodoIds(noteId: string, todoIds: string[]): Promise<{ ok: boolean; error?: string }> {
       return ipcRenderer.invoke("notes:add-todo-ids", { noteId, todoIds });

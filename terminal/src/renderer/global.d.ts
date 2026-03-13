@@ -15,8 +15,6 @@ interface VolleyProjectConfig {
 
 type SessionLifecycle = "todo" | "in_progress" | "completed";
 type TodoType = "bug" | "feature" | "improvement";
-type PlanStatus = "pending" | "planning" | "ready" | "failed";
-
 interface VolleyProject {
   id: string;
   name: string;
@@ -41,7 +39,7 @@ interface VolleySession {
   mergedTo?: string;
   todoType?: TodoType;
   description?: string;
-  planStatus?: PlanStatus;
+  planStatus?: string;
   planMarkdown?: string;
   sourceNoteId?: string | null;
   folderId?: string | null;
@@ -77,19 +75,19 @@ interface VolleyApi {
   };
   session: {
     start(task: string, baseBranch?: string): void;
-    onOpened(callback: (session: VolleySession & { pendingId?: string; todoType?: TodoType; description?: string; planStatus?: PlanStatus; sourceNoteId?: string | null; folderId?: string | null }) => void): void;
+    onOpened(callback: (session: VolleySession & { pendingId?: string; todoType?: TodoType; description?: string; sourceNoteId?: string | null; folderId?: string | null }) => void): void;
+    onAutoStart(callback: (payload: { sessionId: string }) => void): void;
     onClosed(callback: (payload: { sessionId: string }) => void): void;
     onPending(callback: (payload: { pendingId: string; task: string }) => void): void;
     onSetupOutput(callback: (payload: { pendingId: string; data: string }) => void): void;
     onSetupFailed(callback: (payload: { pendingId: string; error: string }) => void): void;
     onSetupWarning(callback: (payload: { task: string; error: string }) => void): void;
     remove(sessionId: string): Promise<{ ok: boolean; error?: string }>;
-    createTodo(task: string, opts?: { todoType?: TodoType; description?: string; autoPlan?: boolean; sourceNoteId?: string }): Promise<{ ok: boolean; id?: string; error?: string }>;
+    createTodo(task: string, opts?: { todoType?: TodoType; description?: string; sourceNoteId?: string }): Promise<{ ok: boolean; id?: string; error?: string }>;
     updateTodo(sessionId: string, updates: { task?: string; todoType?: TodoType; description?: string }): Promise<{ ok: boolean; error?: string }>;
     startTodo(sessionId: string, baseBranch?: string): void;
     complete(sessionId: string, mergedTo?: string): Promise<{ ok: boolean; error?: string }>;
     delete(sessionId: string): Promise<{ ok: boolean; error?: string }>;
-    updatePlan(sessionId: string, markdown: string): Promise<{ ok: boolean; error?: string }>;
     reorder(ids: string[], lifecycle: string): Promise<{ ok: boolean; error?: string }>;
     foldersList(): Promise<{ folders: FolderData[] }>;
     folderCreate(name: string): Promise<{ ok: boolean; folder?: FolderData; error?: string }>;
@@ -163,11 +161,6 @@ interface VolleyApi {
     onSwitched(callback: (payload: { projectId: string | null; projectName: string; projectPath: string }) => void): void;
   };
   planning: {
-    planOne(sessionId: string): Promise<{ ok: boolean; error?: string }>;
-    planAll(): Promise<{ ok: boolean; error?: string }>;
-    cancel(sessionId: string): Promise<{ ok: boolean; error?: string }>;
-    status(): Promise<{ currentSessionId: string | null; queue: string[] }>;
-    onStatusChanged(callback: (payload: { sessionId: string; planStatus: string; planMarkdown?: string; error?: string }) => void): void;
     analyzeProject(): Promise<{ ok: boolean; error?: string }>;
     contextStatus(): Promise<{ exists: boolean; analyzing: boolean; updatedAt?: string }>;
     onAnalyzeStatus(callback: (payload: { status: string; error?: string }) => void): void;
@@ -180,6 +173,10 @@ interface VolleyApi {
     unarchive(id: string): Promise<{ ok: boolean; error?: string }>;
     delete(id: string): Promise<{ ok: boolean; error?: string }>;
     extractTodos(noteId: string, content: string): Promise<{ ok: boolean; drafts?: { title: string; type: "bug" | "feature" | "improvement"; description: string }[]; error?: string }>;
+    onExtractProgress(callback: (payload: { noteId: string; phase: string }) => void): void;
+    continueTodos(noteId: string, partialResult: string): Promise<{ ok: boolean; drafts?: { title: string; type: "bug" | "feature" | "improvement"; description: string }[]; error?: string }>;
+    loadExtractions(): Promise<{ extractions: Record<string, any> }>;
+    saveExtractions(extractions: Record<string, any>): Promise<{ ok: boolean }>;
     addTodoIds(noteId: string, todoIds: string[]): Promise<{ ok: boolean; error?: string }>;
     reorder(ids: string[]): Promise<{ ok: boolean; error?: string }>;
     folderCreate(name: string): Promise<{ ok: boolean; folder?: FolderData; error?: string }>;
