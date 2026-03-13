@@ -2,19 +2,22 @@ import { useEffect } from "react";
 import { useSessionStore } from "../store/session-store";
 import { useProjectStore } from "../store/project-store";
 import { useNoteStore } from "../store/note-store";
+import { useUiStore } from "../store/ui-store";
 
 let setupWarningShown = false;
 
 export function useIpcListeners() {
   useEffect(() => {
-    // Fetch start command from config on init
-    useSessionStore.getState().fetchStartCommand();
-
-    // Load notes
-    useNoteStore.getState().fetchNotes();
-
-    // Load todo folders
-    useSessionStore.getState().fetchTodoFolders();
+    // Fetch all initial data, then mark the app ready
+    Promise.all([
+      window.volley.config.getStartCommand().then(({ command }) => {
+        useSessionStore.setState({ startCommand: command });
+      }),
+      useNoteStore.getState().fetchNotes(),
+      useSessionStore.getState().fetchTodoFolders(),
+    ]).finally(() => {
+      useUiStore.getState().setAppReady();
+    });
 
     // Listen for project switches
     window.volley.project.onSwitched(() => {

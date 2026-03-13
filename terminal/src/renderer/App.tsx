@@ -23,6 +23,7 @@ import ToastContainer from "./components/shared/ToastContainer";
 import NoteEditor from "./components/notes/NoteEditor";
 import { useProjectStore } from "./store/project-store";
 import { useNoteStore } from "./store/note-store";
+import SplashScreen from "./components/layout/SplashScreen";
 
 export default function App() {
   const sessions = useSessionStore((s) => s.sessions);
@@ -84,6 +85,7 @@ export default function App() {
       <LandModal />
       <SwitchProjectModal />
       <ToastContainer />
+      <SplashScreen />
     </div>
   );
 }
