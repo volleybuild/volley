@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volley — Three Dots Colors</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #08080c;
+    color: #e0e0e8;
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 24px;
+    gap: 44px;
+  }
+  .page-title { font-size: 13px; font-weight: 300; letter-spacing: 4px; text-transform: uppercase; color: #555; }
+  .concepts { display: flex; gap: 28px; flex-wrap: wrap; justify-content: center; }
+  .concept { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .concept-label { font-weight: 600; font-size: 13px; color: #fff; }
+  .concept-desc { font-size: 10px; color: #666; text-align: center; max-width: 170px; line-height: 1.6; }
+  .tile {
+    width: 140px; height: 140px; border-radius: 32px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.04);
+  }
+  .dark { background: radial-gradient(ellipse at 50% 40%, #0f1a1a, #0a0c0f); }
+  .light { background: radial-gradient(ellipse at 50% 40%, #f8fafb, #eef1f4); }
+  .section-label { font-size: 13px; font-weight: 600; letter-spacing: 1px; color: #888; margin-top: 4px; }
+  .row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; justify-content: center; }
+  .sg { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .sl { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: #555; }
+  .t { display: flex; align-items: center; justify-content: center; }
+  .td { background: #0a0c0f; }
+  .tl { background: #f0f2f5; }
+  .t64 { width: 64px; height: 64px; border-radius: 14px; }
+  .t32 { width: 32px; height: 32px; border-radius: 7px; }
+  .t16 { width: 16px; height: 16px; border-radius: 3px; }
+  .div { width: 1px; height: 36px; background: #1e2430; }
+  .wordmarks { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; }
+  .wm { display: flex; align-items: center; gap: 10px; padding: 16px 28px; border-radius: 12px; }
+  .wm-dark { background: #0c0c10; }
+  .wm-light { background: #f0f2f5; }
+  .wm-text { font-weight: 700; font-size: 24px; letter-spacing: -0.5px; }
+</style>
+</head>
+<body>
+
+<div class="page-title">Volley — Three Dots · Color Variations</div>
+
+<div class="concepts">
+
+  <!-- Electric Mint on dark -->
+  <div class="concept">
+    <div class="tile dark">
+      <svg width="76" height="64" viewBox="0 0 76 64" fill="none">
+        <defs>
+          <filter id="gm" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+            <feColorMatrix in="b" type="matrix" values="0 0 0 0 0.2 0 0 0 0 0.83 0 0 0 0 0.6 0 0 0 0.35 0" result="c"/>
+            <feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <g filter="url(#gm)">
+          <circle cx="15" cy="15" r="15" fill="#34d399"/>
+          <circle cx="61" cy="15" r="15" fill="#34d399"/>
+          <circle cx="38" cy="49" r="15" fill="#34d399"/>
+        </g>
+      </svg>
+    </div>
+    <div class="concept-label">Mint / Dark</div>
+    <div class="concept-desc">Electric Mint on dark. The brand default.</div>
+  </div>
+
+  <!-- White on dark -->
+  <div class="concept">
+    <div class="tile dark">
+      <svg width="76" height="64" viewBox="0 0 76 64" fill="none">
+        <defs>
+          <filter id="gw" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b"/>
+            <feColorMatrix in="b" type="matrix" values="0 0 0 0 0.9 0 0 0 0 0.92 0 0 0 0 0.95 0 0 0 0.2 0" result="c"/>
+            <feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <g filter="url(#gw)">
+          <circle cx="15" cy="15" r="15" fill="#e8eaf0"/>
+          <circle cx="61" cy="15" r="15" fill="#e8eaf0"/>
+          <circle cx="38" cy="49" r="15" fill="#e8eaf0"/>
+        </g>
+      </svg>
+    </div>
+    <div class="concept-label">White / Dark</div>
+    <div class="concept-desc">Pure white. Max contrast, most versatile.</div>
+  </div>
+
+  <!-- Mint on light -->
+  <div class="concept">
+    <div class="tile light">
+      <svg width="76" height="64" viewBox="0 0 76 64" fill="none">
+        <circle cx="15" cy="15" r="15" fill="#10b981"/>
+        <circle cx="61" cy="15" r="15" fill="#10b981"/>
+        <circle cx="38" cy="49" r="15" fill="#10b981"/>
+      </svg>
+    </div>
+    <div class="concept-label">Mint / Light</div>
+    <div class="concept-desc">Deeper mint on light bg. For light mode or print.</div>
+  </div>
+
+  <!-- Multi-color: mint, cyan, violet -->
+  <div class="concept">
+    <div class="tile dark">
+      <svg width="76" height="64" viewBox="0 0 76 64" fill="none">
+        <defs>
+          <filter id="gc1" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+            <feColorMatrix in="b" type="matrix" values="0 0 0 0 0.2 0 0 0 0 0.83 0 0 0 0 0.6 0 0 0 0.3 0" result="c"/>
+            <feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="gc2" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+            <feColorMatrix in="b" type="matrix" values="0 0 0 0 0.22 0 0 0 0 0.74 0 0 0 0 0.97 0 0 0 0.3 0" result="c"/>
+            <feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="gc3" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+            <feColorMatrix in="b" type="matrix" values="0 0 0 0 0.65 0 0 0 0 0.55 0 0 0 0 0.97 0 0 0 0.3 0" result="c"/>
+            <feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <g filter="url(#gc1)"><circle cx="15" cy="15" r="15" fill="#34d399"/></g>
+        <g filter="url(#gc2)"><circle cx="61" cy="15" r="15" fill="#38bdf8"/></g>
+        <g filter="url(#gc3)"><circle cx="38" cy="49" r="15" fill="#a78bfa"/></g>
+      </svg>
+    </div>
+    <div class="concept-label">Mint · Cyan · Violet</div>
+    <div class="concept-desc">Each dot a different agent. Mint, sky blue, soft purple. Playful, each dot has its own identity.</div>
+  </div>
+
+  <!-- Multi-color: mint, amber, coral -->
+  <div class="concept">
+    <div class="tile dark">
+      <svg width="76" height="64" viewBox="0 0 76 64" fill="none">
+        <defs>
+          <filter id="gd1" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+            <feColorMatrix in="b" type="matrix" values="0 0 0 0 0.2 0 0 0 0 0.83 0 0 0 0 0.6 0 0 0 0.3 0" result="c"/>
+            <feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="gd2" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+            <feColorMatrix in="b" type="matrix" values="0 0 0 0 0.98 0 0 0 0 0.75 0 0 0 0 0.14 0 0 0 0.3 0" result="c"/>
+            <feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="gd3" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+            <feColorMatrix in="b" type="matrix" values="0 0 0 0 0.97 0 0 0 0 0.44 0 0 0 0 0.44 0 0 0 0.3 0" result="c"/>
+            <feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <g filter="url(#gd1)"><circle cx="15" cy="15" r="15" fill="#34d399"/></g>
+        <g filter="url(#gd2)"><circle cx="61" cy="15" r="15" fill="#fbbf24"/></g>
+        <g filter="url(#gd3)"><circle cx="38" cy="49" r="15" fill="#f87171"/></g>
+      </svg>
+    </div>
+    <div class="concept-label">Mint · Amber · Coral</div>
+    <div class="concept-desc">Traffic light energy — go, working, alert. Maps to your status colors: running, idle, error.</div>
+  </div>
+
+  <!-- Multi-color: three greens (mint spectrum) -->
+  <div class="concept">
+    <div class="tile dark">
+      <svg width="76" height="64" viewBox="0 0 76 64" fill="none">
+        <defs>
+          <filter id="ge" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+            <feColorMatrix in="b" type="matrix" values="0 0 0 0 0.2 0 0 0 0 0.83 0 0 0 0 0.6 0 0 0 0.35 0" result="c"/>
+            <feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <g filter="url(#ge)">
+          <circle cx="15" cy="15" r="15" fill="#6ee7b7"/>
+          <circle cx="61" cy="15" r="15" fill="#34d399"/>
+          <circle cx="38" cy="49" r="15" fill="#10b981"/>
+        </g>
+      </svg>
+    </div>
+    <div class="concept-label">Mint Spectrum</div>
+    <div class="concept-desc">Three shades of the brand green. Subtle variation, stays on-brand but each dot is distinct.</div>
+  </div>
+
+</div>
+
+<!-- Size test -->
+<div class="section-label">Size Test (64 → 32 → 16)</div>
+<div class="row">
+
+  <!-- Mint -->
+  <div class="sg"><div class="t td t64"><svg width="42" height="36" viewBox="0 0 76 64" fill="none">
+    <circle cx="15" cy="15" r="15" fill="#34d399"/>
+    <circle cx="61" cy="15" r="15" fill="#34d399"/>
+    <circle cx="38" cy="49" r="15" fill="#34d399"/>
+  </svg></div><div class="sl">Mint</div></div>
+  <div class="sg"><div class="t td t32"><svg width="22" height="18" viewBox="0 0 76 64" fill="none">
+    <circle cx="15" cy="15" r="16" fill="#34d399"/>
+    <circle cx="61" cy="15" r="16" fill="#34d399"/>
+    <circle cx="38" cy="49" r="16" fill="#34d399"/>
+  </svg></div><div class="sl">Mint</div></div>
+  <div class="sg"><div class="t td t16"><svg width="12" height="10" viewBox="0 0 76 64" fill="none">
+    <circle cx="15" cy="15" r="17" fill="#34d399"/>
+    <circle cx="61" cy="15" r="17" fill="#34d399"/>
+    <circle cx="38" cy="49" r="17" fill="#34d399"/>
+  </svg></div><div class="sl">Mint</div></div>
+
+  <div class="div"></div>
+
+  <!-- White -->
+  <div class="sg"><div class="t td t64"><svg width="42" height="36" viewBox="0 0 76 64" fill="none">
+    <circle cx="15" cy="15" r="15" fill="#e8eaf0"/>
+    <circle cx="61" cy="15" r="15" fill="#e8eaf0"/>
+    <circle cx="38" cy="49" r="15" fill="#e8eaf0"/>
+  </svg></div><div class="sl">White</div></div>
+  <div class="sg"><div class="t td t32"><svg width="22" height="18" viewBox="0 0 76 64" fill="none">
+    <circle cx="15" cy="15" r="16" fill="#e8eaf0"/>
+    <circle cx="61" cy="15" r="16" fill="#e8eaf0"/>
+    <circle cx="38" cy="49" r="16" fill="#e8eaf0"/>
+  </svg></div><div class="sl">White</div></div>
+  <div class="sg"><div class="t td t16"><svg width="12" height="10" viewBox="0 0 76 64" fill="none">
+    <circle cx="15" cy="15" r="17" fill="#e8eaf0"/>
+    <circle cx="61" cy="15" r="17" fill="#e8eaf0"/>
+    <circle cx="38" cy="49" r="17" fill="#e8eaf0"/>
+  </svg></div><div class="sl">White</div></div>
+
+  <div class="div"></div>
+
+  <!-- Multi: mint/cyan/violet -->
+  <div class="sg"><div class="t td t64"><svg width="42" height="36" viewBox="0 0 76 64" fill="none">
+    <circle cx="15" cy="15" r="15" fill="#34d399"/>
+    <circle cx="61" cy="15" r="15" fill="#38bdf8"/>
+    <circle cx="38" cy="49" r="15" fill="#a78bfa"/>
+  </svg></div><div class="sl">M·C·V</div></div>
+  <div class="sg"><div class="t td t32"><svg width="22" height="18" viewBox="0 0 76 64" fill="none">
+    <circle cx="15" cy="15" r="16" fill="#34d399"/>
+    <circle cx="61" cy="15" r="16" fill="#38bdf8"/>
+    <circle cx="38" cy="49" r="16" fill="#a78bfa"/>
+  </svg></div><div class="sl">M·C·V</div></div>
+  <div class="sg"><div class="t td t16"><svg width="12" height="10" viewBox="0 0 76 64" fill="none">
+    <circle cx="15" cy="15" r="17" fill="#34d399"/>
+    <circle cx="61" cy="15" r="17" fill="#38bdf8"/>
+    <circle cx="38" cy="49" r="17" fill="#a78bfa"/>
+  </svg></div><div class="sl">M·C·V</div></div>
+
+  <div class="div"></div>
+
+  <!-- Multi: mint/amber/coral -->
+  <div class="sg"><div class="t td t64"><svg width="42" height="36" viewBox="0 0 76 64" fill="none">
+    <circle cx="15" cy="15" r="15" fill="#34d399"/>
+    <circle cx="61" cy="15" r="15" fill="#fbbf24"/>
+    <circle cx="38" cy="49" r="15" fill="#f87171"/>
+  </svg></div><div class="sl">M·A·C</div></div>
+  <div class="sg"><div class="t td t32"><svg width="22" height="18" viewBox="0 0 76 64" fill="none">
+    <circle cx="15" cy="15" r="16" fill="#34d399"/>
+    <circle cx="61" cy="15" r="16" fill="#fbbf24"/>
+    <circle cx="38" cy="49" r="16" fill="#f87171"/>
+  </svg></div><div class="sl">M·A·C</div></div>
+  <div class="sg"><div class="t td t16"><svg width="12" height="10" viewBox="0 0 76 64" fill="none">
+    <circle cx="15" cy="15" r="17" fill="#34d399"/>
+    <circle cx="61" cy="15" r="17" fill="#fbbf24"/>
+    <circle cx="38" cy="49" r="17" fill="#f87171"/>
+  </svg></div><div class="sl">M·A·C</div></div>
+
+  <div class="div"></div>
+
+  <!-- Mint spectrum -->
+  <div class="sg"><div class="t td t64"><svg width="42" height="36" viewBox="0 0 76 64" fill="none">
+    <circle cx="15" cy="15" r="15" fill="#6ee7b7"/>
+    <circle cx="61" cy="15" r="15" fill="#34d399"/>
+    <circle cx="38" cy="49" r="15" fill="#10b981"/>
+  </svg></div><div class="sl">Spec</div></div>
+  <div class="sg"><div class="t td t32"><svg width="22" height="18" viewBox="0 0 76 64" fill="none">
+    <circle cx="15" cy="15" r="16" fill="#6ee7b7"/>
+    <circle cx="61" cy="15" r="16" fill="#34d399"/>
+    <circle cx="38" cy="49" r="16" fill="#10b981"/>
+  </svg></div><div class="sl">Spec</div></div>
+  <div class="sg"><div class="t td t16"><svg width="12" height="10" viewBox="0 0 76 64" fill="none">
+    <circle cx="15" cy="15" r="17" fill="#6ee7b7"/>
+    <circle cx="61" cy="15" r="17" fill="#34d399"/>
+    <circle cx="38" cy="49" r="17" fill="#10b981"/>
+  </svg></div><div class="sl">Spec</div></div>
+
+</div>
+
+<!-- Wordmarks -->
+<div class="section-label">Wordmarks</div>
+<div class="wordmarks">
+  <div class="wm wm-dark">
+    <svg width="22" height="18" viewBox="0 0 76 64" fill="none">
+      <circle cx="15" cy="15" r="15" fill="#34d399"/>
+      <circle cx="61" cy="15" r="15" fill="#34d399"/>
+      <circle cx="38" cy="49" r="15" fill="#34d399"/>
+    </svg>
+    <span class="wm-text" style="color:#34d399;">Volley</span>
+  </div>
+  <div class="wm wm-dark">
+    <svg width="22" height="18" viewBox="0 0 76 64" fill="none">
+      <circle cx="15" cy="15" r="15" fill="#e8eaf0"/>
+      <circle cx="61" cy="15" r="15" fill="#e8eaf0"/>
+      <circle cx="38" cy="49" r="15" fill="#e8eaf0"/>
+    </svg>
+    <span class="wm-text" style="color:#e8eaf0;">Volley</span>
+  </div>
+  <div class="wm wm-dark">
+    <svg width="22" height="18" viewBox="0 0 76 64" fill="none">
+      <circle cx="15" cy="15" r="15" fill="#34d399"/>
+      <circle cx="61" cy="15" r="15" fill="#38bdf8"/>
+      <circle cx="38" cy="49" r="15" fill="#a78bfa"/>
+    </svg>
+    <span class="wm-text" style="color:#e8eaf0;">Volley</span>
+  </div>
+  <div class="wm wm-dark">
+    <svg width="22" height="18" viewBox="0 0 76 64" fill="none">
+      <circle cx="15" cy="15" r="15" fill="#34d399"/>
+      <circle cx="61" cy="15" r="15" fill="#fbbf24"/>
+      <circle cx="38" cy="49" r="15" fill="#f87171"/>
+    </svg>
+    <span class="wm-text" style="color:#e8eaf0;">Volley</span>
+  </div>
+  <div class="wm wm-light">
+    <svg width="22" height="18" viewBox="0 0 76 64" fill="none">
+      <circle cx="15" cy="15" r="15" fill="#10b981"/>
+      <circle cx="61" cy="15" r="15" fill="#10b981"/>
+      <circle cx="38" cy="49" r="15" fill="#10b981"/>
+    </svg>
+    <span class="wm-text" style="color:#0a0c0f;">Volley</span>
+  </div>
+  <div class="wm wm-light">
+    <svg width="22" height="18" viewBox="0 0 76 64" fill="none">
+      <circle cx="15" cy="15" r="15" fill="#10b981"/>
+      <circle cx="61" cy="15" r="15" fill="#0ea5e9"/>
+      <circle cx="38" cy="49" r="15" fill="#7c3aed"/>
+    </svg>
+    <span class="wm-text" style="color:#0a0c0f;">Volley</span>
+  </div>
+</div>
+
+</body>
+</html>
