@@ -146,6 +146,12 @@ const knownSessions = new Map<string, string>();
 // Track pending sessions: pendingId → task name
 const pendingTasks = new Map<string, string>();
 
+// Track child processes for pending sessions so they can be cancelled
+const pendingProcesses = new Map<string, ReturnType<typeof spawn>>();
+
+// Flag: first syncSessions() call sets existing in_progress sessions to paused
+let initialSyncDone = false;
+
 
 function syncSessions(): void {
   if (!repoRoot) return;
@@ -174,11 +180,14 @@ function syncSessions(): void {
     const previousLifecycle = knownSessions.get(session.id);
 
     if (previousLifecycle === undefined) {
-      // New session we haven't seen yet — spawn pty and notify renderer
+      // New session we haven't seen yet
       knownSessions.set(session.id, lifecycle);
 
-      // Only spawn PTY for in_progress sessions with worktrees
-      if (lifecycle === "in_progress" && session.worktreePath && !ptyManager.has(session.id)) {
+      // On initial sync, existing in_progress sessions start paused (no PTY)
+      const shouldPause = !initialSyncDone && lifecycle === "in_progress";
+
+      // Only spawn PTY for in_progress sessions with worktrees (skip if pausing)
+      if (!shouldPause && lifecycle === "in_progress" && session.worktreePath && !ptyManager.has(session.id)) {
         ptyManager.spawn(session.worktreePath, session.id);
       }
 
@@ -192,7 +201,7 @@ function syncSessions(): void {
         }
       }
 
-      log("sending session:opened for", session.id, `lifecycle=${lifecycle}`, matchedPendingId ? `(was pending ${matchedPendingId})` : "");
+      log("sending session:opened for", session.id, `lifecycle=${lifecycle}`, shouldPause ? "(paused)" : "", matchedPendingId ? `(was pending ${matchedPendingId})` : "");
       mainWindow?.webContents.send("session:opened", {
         id: session.id,
         slug: session.id,
@@ -210,6 +219,7 @@ function syncSessions(): void {
         planMarkdown: session.planMarkdown,
         sourceNoteId: session.sourceNoteId,
         folderId: session.folderId,
+        paused: shouldPause || undefined,
       });
     } else if (previousLifecycle !== lifecycle) {
       // Lifecycle transition (e.g. "todo" → "in_progress")
@@ -259,6 +269,11 @@ function syncSessions(): void {
       ptyManager.kill(id);
       mainWindow?.webContents.send("session:closed", { sessionId: id });
     }
+  }
+
+  // Mark initial sync as done so subsequent syncs spawn PTYs normally
+  if (!initialSyncDone) {
+    initialSyncDone = true;
   }
 }
 
@@ -326,6 +341,8 @@ function switchToProject(projectPath: string): void {
   teardownStateWatcher();
   knownSessions.clear();
   pendingTasks.clear();
+  pendingProcesses.clear();
+  initialSyncDone = false;
   // Set new project
   repoRoot = path.resolve(projectPath);
   providerOverride = readProviderOverride();
@@ -541,8 +558,37 @@ app.whenReady().then(() => {
     log("renderer ready, syncing sessions...");
     // Clear known sessions so all get re-sent to the fresh renderer
     knownSessions.clear();
+    initialSyncDone = false;
     syncSessions();
     watchStateFile();
+  });
+
+  // ── Session pause/resume/cancel handlers ─────────────────────────────
+
+  ipcMain.on("session:pause", (_event, { sessionId }: { sessionId: string }) => {
+    log("session:pause", sessionId);
+    ptyManager.kill(sessionId);
+  });
+
+  ipcMain.on("session:resume", (_event, { sessionId }: { sessionId: string }) => {
+    if (!repoRoot) return;
+    log("session:resume", sessionId);
+    const state = loadStateFromDisk(repoRoot);
+    const session = state?.sessions.find(s => s.id === sessionId);
+    if (session?.worktreePath) {
+      ptyManager.spawn(session.worktreePath, sessionId);
+    }
+  });
+
+  ipcMain.on("session:cancel-setup", (_event, { pendingId }: { pendingId: string }) => {
+    log("session:cancel-setup", pendingId);
+    const child = pendingProcesses.get(pendingId);
+    if (child) {
+      child.kill();
+      pendingProcesses.delete(pendingId);
+    }
+    pendingTasks.delete(pendingId);
+    mainWindow?.webContents.send("session:setup-failed", { pendingId, error: "Setup cancelled" });
   });
 
   // ── Session handlers ────────────────────────────────────────────────────
@@ -561,6 +607,7 @@ app.whenReady().then(() => {
     if (baseBranch) args.push("--base", baseBranch);
     log("session:start CLI args:", args, "cwd:", repoRoot);
     const child = spawnCli(args, repoRoot);
+    pendingProcesses.set(pendingId, child);
     let stderrBuf = "";
 
     child.stdout?.on("data", (chunk: Buffer) => {
@@ -576,11 +623,13 @@ app.whenReady().then(() => {
     child.on("error", (err) => {
       logError("session:start spawn error:", err.message);
       pendingTasks.delete(pendingId);
+      pendingProcesses.delete(pendingId);
       mainWindow?.webContents.send("session:setup-failed", { pendingId, error: err.message });
     });
 
     child.on("exit", (code) => {
       log("session:start exited with code", code);
+      pendingProcesses.delete(pendingId);
       if (code !== 0) {
         pendingTasks.delete(pendingId);
         mainWindow?.webContents.send("session:setup-failed", { pendingId, error: `volley start exited with code ${code}` });
@@ -738,6 +787,7 @@ app.whenReady().then(() => {
     if (baseBranch) args.push("--base", baseBranch);
     log("session:start-todo CLI args:", args, "cwd:", repoRoot);
     const child = spawnCli(args, repoRoot);
+    pendingProcesses.set(pendingId, child);
     let stderrBuf = "";
 
     child.stdout?.on("data", (chunk: Buffer) => {
@@ -753,11 +803,13 @@ app.whenReady().then(() => {
     child.on("error", (err) => {
       logError("session:start-todo spawn error:", err.message);
       pendingTasks.delete(pendingId);
+      pendingProcesses.delete(pendingId);
       mainWindow?.webContents.send("session:setup-failed", { pendingId, error: err.message });
     });
 
     child.on("exit", (code) => {
       log("session:start-todo exited with code", code);
+      pendingProcesses.delete(pendingId);
       if (code !== 0) {
         pendingTasks.delete(pendingId);
         mainWindow?.webContents.send("session:setup-failed", { pendingId, error: `volley start exited with code ${code}` });

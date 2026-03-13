@@ -12,7 +12,7 @@ export interface SessionState {
   task: string;
   worktreePath: string;
   startTime: number;
-  status: "pending" | "running" | "idle" | "exited";
+  status: "pending" | "running" | "idle" | "exited" | "paused";
   lifecycle: SessionLifecycle;
   completedAt?: number;
   mergedTo?: string;

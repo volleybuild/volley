@@ -20,6 +20,10 @@ interface Props {
   isActive: boolean;
   onClick: () => void;
   onDelete?: () => void;
+  onPause?: () => void;
+  onResume?: () => void;
+  onRemove?: () => void;
+  onCancelSetup?: () => void;
   draggable?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
   onDragOver?: (e: React.DragEvent) => void;
@@ -29,17 +33,19 @@ interface Props {
   indented?: boolean;
 }
 
-export default function TabItem({ session, isActive, onClick, onDelete, draggable, onDragStart, onDragOver, onDrop, onDragEnd, isDragOver, indented }: Props) {
+export default function TabItem({ session, isActive, onClick, onDelete, onPause, onResume, onRemove, onCancelSetup, draggable, onDragStart, onDragOver, onDrop, onDragEnd, isDragOver, indented }: Props) {
   const now = Date.now();
   const [stat, setStat] = useState<LineStat | null>(null);
   const isPending = session.status === "pending";
+  const isPaused = session.status === "paused";
   const isTodo = session.lifecycle === "todo";
   const isCompleted = session.lifecycle === "completed";
+  const isInProgress = session.lifecycle === "in_progress" && !isPending;
   const agentStatus = useAgentStore((s) => s.status[session.id] || "idle");
 
   useEffect(() => {
-    // Don't fetch stats for pending, todo, or completed sessions
-    if (isPending || isTodo || isCompleted) return;
+    // Don't fetch stats for pending, paused, todo, or completed sessions
+    if (isPending || isPaused || isTodo || isCompleted) return;
     let cancelled = false;
     const fetch = () => {
       window.volley.git.lineStat(session.id).then((d) => {
@@ -49,7 +55,7 @@ export default function TabItem({ session, isActive, onClick, onDelete, draggabl
     fetch();
     const interval = setInterval(fetch, 15000);
     return () => { cancelled = true; clearInterval(interval); };
-  }, [session.id, isPending, isTodo, isCompleted]);
+  }, [session.id, isPending, isPaused, isTodo, isCompleted]);
 
   const hasStats = stat && (stat.files > 0);
 
@@ -113,6 +119,8 @@ export default function TabItem({ session, isActive, onClick, onDelete, draggabl
         <span className="mt-[4px] w-[10px] h-[10px] rounded-full bg-green-500/30 flex-shrink-0 flex items-center justify-center text-green-400">
           <span dangerouslySetInnerHTML={{ __html: ICON_CHECK }} />
         </span>
+      ) : isPaused ? (
+        <span className="mt-[5px] w-2 h-2 rounded-full flex-shrink-0 bg-gray-500" />
       ) : !isPending && agentStatus !== "idle" ? (
         <span
           className={`mt-[5px] w-2 h-2 rounded-full flex-shrink-0 ${
@@ -150,30 +158,124 @@ export default function TabItem({ session, isActive, onClick, onDelete, draggabl
               </button>
             </span>
           ) : isCompleted ? (
-            <span className="text-[11px] text-gray-600 flex-shrink-0">
-              {session.completedAt ? formatElapsed(now - session.completedAt) : ""}
+            <span className="flex items-center gap-1 flex-shrink-0 h-5">
+              <span className="text-[11px] text-gray-600 group-hover:hidden">
+                {session.completedAt ? formatElapsed(now - session.completedAt) : ""}
+              </span>
+              {onRemove && (
+                <IconButton
+                  onClick={(e) => { e.stopPropagation(); onRemove(); }}
+                  title="Remove session"
+                  variant="danger"
+                  className="hidden group-hover:flex"
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </IconButton>
+              )}
             </span>
           ) : isPending ? (
-            <span className="text-[11px] text-gray-500 flex-shrink-0">
-              Setting up...
+            <span className="flex items-center gap-1 flex-shrink-0 h-5">
+              <span className="text-[11px] text-gray-500 group-hover:hidden">
+                Setting up...
+              </span>
+              {onCancelSetup && (
+                <IconButton
+                  onClick={(e) => { e.stopPropagation(); onCancelSetup(); }}
+                  title="Cancel setup"
+                  variant="danger"
+                  className="hidden group-hover:flex"
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </IconButton>
+              )}
+            </span>
+          ) : isPaused ? (
+            <span className="flex items-center gap-0.5 flex-shrink-0 h-5">
+              <span className="text-[11px] text-gray-500 group-hover:hidden">Paused</span>
+              {onResume && (
+                <IconButton
+                  onClick={(e) => { e.stopPropagation(); onResume(); }}
+                  title="Resume session"
+                  className="hidden group-hover:flex text-accent-bright"
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                </IconButton>
+              )}
+              {onRemove && (
+                <IconButton
+                  onClick={(e) => { e.stopPropagation(); onRemove(); }}
+                  title="Remove session"
+                  variant="danger"
+                  className="hidden group-hover:flex"
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </IconButton>
+              )}
+            </span>
+          ) : isInProgress && session.exitCode === null ? (
+            <span className="flex items-center gap-0.5 flex-shrink-0 h-5">
+              <span className="tabular-nums text-[11px] text-gray-600 group-hover:hidden">
+                {formatElapsed(now - session.startTime)}
+              </span>
+              {onPause && (
+                <IconButton
+                  onClick={(e) => { e.stopPropagation(); onPause(); }}
+                  title="Pause session"
+                  className="hidden group-hover:flex"
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="text-gray-400">
+                    <rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" />
+                  </svg>
+                </IconButton>
+              )}
+              {onRemove && (
+                <IconButton
+                  onClick={(e) => { e.stopPropagation(); onRemove(); }}
+                  title="Remove session"
+                  variant="danger"
+                  className="hidden group-hover:flex"
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </IconButton>
+              )}
             </span>
           ) : session.exitCode !== null ? (
-            <span className={`flex-shrink-0 rounded-full px-1.5 text-[11px] leading-4 whitespace-nowrap ${
-              session.exitCode === 0
-                ? "bg-green-500/15 text-green-400"
-                : "bg-red-500/15 text-red-400"
-            }`}>
-              exit {session.exitCode}
+            <span className="flex items-center gap-1 flex-shrink-0 h-5">
+              <span className={`rounded-full px-1.5 text-[11px] leading-4 whitespace-nowrap group-hover:hidden ${
+                session.exitCode === 0
+                  ? "bg-green-500/15 text-green-400"
+                  : "bg-red-500/15 text-red-400"
+              }`}>
+                exit {session.exitCode}
+              </span>
+              {onRemove && (
+                <IconButton
+                  onClick={(e) => { e.stopPropagation(); onRemove(); }}
+                  title="Remove session"
+                  variant="danger"
+                  className="hidden group-hover:flex"
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </IconButton>
+              )}
             </span>
-          ) : (
-            <span className="tabular-nums text-[11px] text-gray-600 flex-shrink-0">
-              {formatElapsed(now - session.startTime)}
-            </span>
-          )}
+          ) : null}
         </div>
 
         {/* Branch info - only for in_progress sessions */}
-        {!isPending && !isTodo && !isCompleted && (
+        {!isPending && !isPaused && !isTodo && !isCompleted && (
           <div className="flex items-center gap-1.5">
             <span className="inline-flex items-center gap-1 text-[11px] text-accent-cyan/60 truncate">
               <span dangerouslySetInnerHTML={{ __html: ICON_BRANCH }} />
@@ -214,7 +316,7 @@ export default function TabItem({ session, isActive, onClick, onDelete, draggabl
         )}
 
         {/* Stats for in_progress sessions */}
-        {!isPending && !isTodo && !isCompleted && hasStats && (
+        {!isPending && !isPaused && !isTodo && !isCompleted && hasStats && (
           <div className="flex items-center gap-1.5 text-[11px] tabular-nums mt-0.5 text-gray-500">
             <span>{stat!.files} {stat!.files === 1 ? "file" : "files"}</span>
             <span className="text-gray-700">·</span>

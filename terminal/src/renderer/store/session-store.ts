@@ -34,6 +34,8 @@ interface SessionStore {
   updateSessionDescription: (sessionId: string, description: string) => void;
   updateSessionTodoType: (sessionId: string, todoType: TodoType) => void;
   reorderSessions: (orderedIds: string[], lifecycle: SessionLifecycle) => void;
+  pauseSession: (sessionId: string) => void;
+  resumeSession: (sessionId: string) => void;
   clearAllSessions: () => void;
   fetchTodoFolders: () => Promise<void>;
   createTodoFolder: (name: string) => Promise<FolderData | null>;
@@ -74,11 +76,12 @@ function createSessionStore() {
 
     // Todo sessions transitioning to another lifecycle don't need a terminal
     const isTodo = (session.lifecycle as SessionLifecycle) === "todo";
+    const isPaused = !!(session as any).paused;
 
     let terminal: Terminal | null = null;
     let fitAddon: FitAddon | null = null;
 
-    if (!isTodo) {
+    if (!isTodo && !isPaused) {
       terminal = new Terminal({
         theme: volleyTheme,
         fontFamily: "'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, monospace",
@@ -111,7 +114,7 @@ function createSessionStore() {
       task: session.task,
       worktreePath: session.worktreePath,
       startTime: pending?.startTime ?? Date.now(),
-      status: isTodo ? "idle" : "running",
+      status: isPaused ? "paused" : isTodo ? "idle" : "running",
       lifecycle: (session.lifecycle as SessionLifecycle) || "in_progress",
       completedAt: session.completedAt ? new Date(session.completedAt).getTime() : undefined,
       mergedTo: session.mergedTo,
@@ -476,6 +479,74 @@ function createSessionStore() {
 
     set({ sessions: next });
     window.volley.session.reorder(orderedIds, lifecycle);
+  },
+
+  pauseSession: (sessionId) => {
+    const { sessions } = get();
+    const session = sessions.get(sessionId);
+    if (!session) return;
+
+    // Dispose xterm terminal
+    session.terminal?.dispose();
+    session.runTerminal?.dispose();
+
+    // Kill PTY in main process
+    window.volley.pty.pause(sessionId);
+
+    const next = new Map(sessions);
+    next.set(sessionId, {
+      ...session,
+      status: "paused",
+      terminal: null,
+      fitAddon: null,
+      runTerminal: null,
+      runFitAddon: null,
+      runStatus: "idle",
+      runExitCode: null,
+    });
+    set({ sessions: next });
+  },
+
+  resumeSession: (sessionId) => {
+    const { sessions } = get();
+    const session = sessions.get(sessionId);
+    if (!session) return;
+
+    // Create new xterm terminal
+    const terminal = new Terminal({
+      theme: volleyTheme,
+      fontFamily: "'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, monospace",
+      fontSize: 12,
+      lineHeight: 1.2,
+      cursorBlink: true,
+      cursorStyle: "block",
+      allowProposedApi: true,
+    });
+
+    const fitAddon = new FitAddon();
+    terminal.loadAddon(fitAddon);
+
+    try {
+      terminal.loadAddon(new WebglAddon());
+    } catch {
+      // WebGL not available
+    }
+
+    terminal.onData((data: string) => {
+      window.volley.pty.write(sessionId, data);
+    });
+
+    // Spawn PTY in main process
+    window.volley.pty.resume(sessionId);
+
+    const next = new Map(sessions);
+    next.set(sessionId, {
+      ...session,
+      status: "running",
+      terminal,
+      fitAddon,
+    });
+    set({ sessions: next });
   },
 
   clearAllSessions: () => {
