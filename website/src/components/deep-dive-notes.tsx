@@ -50,7 +50,7 @@ export function DeepDiveNotes() {
 
   return (
     <AppFrame>
-      <div className="h-[340px] flex flex-col overflow-hidden">
+      <div className="h-[280px] flex flex-col overflow-hidden">
         <FakeNoteEditor
           visibleLines={noteLineCount}
           generateVisible={generateVisible}

@@ -4,6 +4,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import { useNoteStore } from "../../store/note-store";
 import { useAutoSave } from "../../hooks/use-auto-save";
+import IconButton from "../shared/IconButton";
 import DraftTodosPanel from "./DraftTodosPanel";
 import "./note-styles.css";
 
@@ -110,28 +111,34 @@ export default function NoteEditor({ noteId }: Props) {
           className="flex-1 bg-transparent text-gray-100 text-sm font-medium outline-none placeholder-gray-600"
           placeholder="Untitled"
         />
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <button
             onClick={handleExtractTodos}
-            className="px-2 py-1 rounded text-[11px] text-accent-bright/80 hover:text-accent-bright hover:bg-accent-bright/10 transition-colors"
-            title="Extract Todos"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium transition-colors bg-accent-bright/10 text-accent-bright border border-accent-bright/20 hover:bg-accent-bright/15 hover:border-accent-bright/30"
           >
-            Extract Todos
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            Generate todos
           </button>
-          <button
-            onClick={handleArchive}
-            className="px-2 py-1 rounded text-[11px] text-gray-500 hover:text-gray-300 hover:bg-white/[0.06] transition-colors"
-            title={isArchived ? "Unarchive" : "Archive"}
-          >
-            {isArchived ? "Unarchive" : "Archive"}
-          </button>
-          <button
-            onClick={handleDelete}
-            className="px-2 py-1 rounded text-[11px] text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-            title="Delete"
-          >
-            Delete
-          </button>
+          <div className="flex items-center gap-0.5">
+          <IconButton onClick={handleArchive} title={isArchived ? "Unarchive" : "Archive"} size="md">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="21 8 21 21 3 21 3 8" />
+              <rect x="1" y="3" width="22" height="5" />
+              <line x1="10" y1="12" x2="14" y2="12" />
+            </svg>
+          </IconButton>
+          <IconButton onClick={handleDelete} title="Delete" size="md" variant="danger">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+              <path d="M10 11v6" />
+              <path d="M14 11v6" />
+              <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
+            </svg>
+          </IconButton>
+          </div>
         </div>
       </div>
 

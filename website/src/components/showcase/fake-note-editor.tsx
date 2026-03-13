@@ -31,9 +31,30 @@ export function FakeNoteEditor({
           <line x1="16" y1="13" x2="8" y2="13" />
           <line x1="16" y1="17" x2="8" y2="17" />
         </svg>
-        <span className="text-[13px] font-medium text-gray-200">
+        <span className="text-[13px] font-medium text-gray-200 flex-1">
           Sprint planning
         </span>
+        <div
+          className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md text-[10px] sm:text-[11px] font-medium cursor-default transition-all duration-500 ${
+            generateActive
+              ? "bg-accent/15 text-accent-bright border border-accent/25 shadow-[0_0_24px_-6px_rgba(110,231,183,0.5)]"
+              : generateVisible
+                ? "bg-white/[0.04] text-gray-500 border border-white/[0.06]"
+                : "opacity-0"
+          }`}
+        >
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+          Generate todos
+        </div>
       </div>
 
       {/* Body */}
@@ -67,35 +88,6 @@ export function FakeNoteEditor({
           </div>
         )}
 
-        {/* Generate todos button */}
-        <div
-          className={`mt-6 sm:mt-8 flex justify-center transition-all duration-300 ${
-            generateVisible
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-2 pointer-events-none"
-          }`}
-        >
-          <div
-            className={`inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-[11px] font-medium cursor-default transition-all duration-500 ${
-              generateActive
-                ? "bg-accent/15 text-accent-bright border border-accent/25 shadow-[0_0_24px_-6px_rgba(110,231,183,0.5)]"
-                : "bg-white/[0.04] text-gray-500 border border-white/[0.06]"
-            }`}
-          >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              className={generateActive ? "text-accent-bright" : ""}
-            >
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-            Generate todos
-          </div>
-        </div>
       </div>
     </div>
   );
