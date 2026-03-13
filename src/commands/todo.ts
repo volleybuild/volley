@@ -54,10 +54,9 @@ export async function cmdTodo(args: string[]): Promise<void> {
     return;
   }
 
-  // Parse flags for create: volley todo [--type <t>] [--description <d>] [--no-plan] [--source-note <id>] <task>
+  // Parse flags for create: volley todo [--type <t>] [--description <d>] [--source-note <id>] <task>
   let todoType: TodoType | undefined;
   let description: string | undefined;
-  let autoPlan = true;
   let sourceNoteId: string | undefined;
   const taskParts: string[] = [];
 
@@ -76,8 +75,6 @@ export async function cmdTodo(args: string[]): Promise<void> {
     } else if (args[i] === "--source-note" && args[i + 1]) {
       sourceNoteId = args[i + 1];
       i++;
-    } else if (args[i] === "--no-plan") {
-      autoPlan = false;
     } else {
       taskParts.push(args[i]);
     }
@@ -91,7 +88,7 @@ export async function cmdTodo(args: string[]): Promise<void> {
   }
 
   try {
-    const session = createTodoSession(task, { todoType, description, autoPlan, sourceNoteId });
+    const session = createTodoSession(task, { todoType, description, sourceNoteId });
     console.log(`\n  ${glyph.filled} Todo created: ${c.mint}${session.id}${c.reset}`);
     if (session.todoType) {
       console.log(`  ${c.dim}Type: ${session.todoType}${c.reset}`);

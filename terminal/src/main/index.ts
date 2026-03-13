@@ -10,7 +10,8 @@ import { registerFsHandlers } from "./fs-handler";
 import { registerGitHandlers } from "./git-handler";
 import { registerSettingsHandlers } from "./settings-handler";
 import { registerAgentHandlers } from "./agent-handler";
-import { registerPlannerHandlers, stopPlanner } from "./planner";
+import { registerProjectContextHandlers, loadProjectContext } from "./project-context";
+import { buildBrainstormPrompt, loadSourceNoteContent } from "./brainstorm-prompt";
 import { registerNotesHandlers } from "./notes-handler";
 import { registerNoteExtractorHandlers } from "./note-extractor";
 import { spawnCliArgs } from "./cli-resolver";
@@ -144,6 +145,7 @@ const knownSessions = new Map<string, string>();
 
 // Track pending sessions: pendingId → task name
 const pendingTasks = new Map<string, string>();
+
 
 function syncSessions(): void {
   if (!repoRoot) return;
@@ -318,14 +320,12 @@ function readProviderOverride(): ProviderName | undefined {
 function switchToProject(projectPath: string): void {
   log("switching project:", repoRoot, "→", projectPath);
   // Tear down current project
-  stopPlanner();
   ptyManager.killAll();
   socketServer?.stop();
   socketServer = null;
   teardownStateWatcher();
   knownSessions.clear();
   pendingTasks.clear();
-
   // Set new project
   repoRoot = path.resolve(projectPath);
   providerOverride = readProviderOverride();
@@ -423,7 +423,7 @@ app.whenReady().then(() => {
   registerGitHandlers(() => repoRoot, () => providerOverride);
   registerSettingsHandlers(() => repoRoot);
   registerAgentHandlers(() => repoRoot, () => mainWindow);
-  registerPlannerHandlers(() => repoRoot, () => mainWindow);
+  registerProjectContextHandlers(() => repoRoot, () => mainWindow);
   registerNotesHandlers(() => repoRoot);
   registerNoteExtractorHandlers(() => repoRoot);
 
@@ -673,7 +673,7 @@ app.whenReady().then(() => {
   });
 
   // Create a todo session (no worktree/branch yet)
-  ipcMain.handle("session:create-todo", (_event, { task, todoType, description, autoPlan, sourceNoteId }: { task: string; todoType?: string; description?: string; autoPlan?: boolean; sourceNoteId?: string }) => {
+  ipcMain.handle("session:create-todo", (_event, { task, todoType, description, sourceNoteId }: { task: string; todoType?: string; description?: string; sourceNoteId?: string }) => {
     if (!repoRoot) return Promise.resolve({ ok: false, error: "No repo root" });
     return new Promise<{ ok: boolean; id?: string; error?: string }>((resolve) => {
       // Snapshot existing session IDs so we can find the new one
@@ -685,7 +685,6 @@ app.whenReady().then(() => {
       if (todoType) args.push("--type", todoType);
       if (description) args.push("--description", description);
       if (sourceNoteId) args.push("--source-note", sourceNoteId);
-      if (autoPlan === false) args.push("--no-plan");
       args.push(task);
       execCli(args, repoRoot!, (err, _stdout, stderr) => {
         if (err) {
@@ -725,6 +724,10 @@ app.whenReady().then(() => {
   ipcMain.on("session:start-todo", (_event, { sessionId, baseBranch }: { sessionId: string; baseBranch?: string }) => {
     if (!repoRoot) return;
 
+    // Snapshot session data before start for brainstorm prompt
+    const preStartState = loadStateFromDisk(repoRoot);
+    const todoSession = preStartState?.sessions.find(s => s.id === sessionId);
+
     const pendingId = "pending-" + Date.now();
     pendingTasks.set(pendingId, sessionId);
 
@@ -759,7 +762,36 @@ app.whenReady().then(() => {
         pendingTasks.delete(pendingId);
         mainWindow?.webContents.send("session:setup-failed", { pendingId, error: `volley start exited with code ${code}` });
       } else {
+        // Write brainstorm.md for agent auto-injection
+        if (repoRoot && todoSession) {
+          try {
+            const projectContext = loadProjectContext(repoRoot) || undefined;
+            const sourceNoteContent = todoSession.sourceNoteId
+              ? loadSourceNoteContent(repoRoot, todoSession.sourceNoteId) || undefined
+              : undefined;
+            const brainstormContent = buildBrainstormPrompt({
+              task: todoSession.task,
+              todoType: todoSession.todoType,
+              description: todoSession.description,
+              sourceNoteContent,
+              projectContext,
+            });
+            const brainstormDir = path.join(repoRoot, ".volley", "sessions", sessionId);
+            if (!fs.existsSync(brainstormDir)) fs.mkdirSync(brainstormDir, { recursive: true });
+            fs.writeFileSync(path.join(brainstormDir, "brainstorm.md"), brainstormContent, "utf-8");
+            log("session:start-todo wrote brainstorm.md for", sessionId);
+          } catch (err: any) {
+            logError("session:start-todo brainstorm write error:", err.message);
+          }
+        }
+
         setTimeout(() => syncSessions(), 100);
+
+        // Auto-start: send after syncSessions has had time to open the session in the renderer
+        setTimeout(() => {
+          log("session:auto-start for", sessionId);
+          mainWindow?.webContents.send("session:auto-start", { sessionId });
+        }, 400);
 
         if (stderrBuf.includes("Command failed:")) {
           const failedLine = stderrBuf.split("\n").find(l => l.includes("Command failed:"))?.trim() || "Setup command failed";
@@ -787,23 +819,6 @@ app.whenReady().then(() => {
         }
       });
     });
-  });
-
-  // Update plan markdown directly (bypasses CLI — terminal-only field)
-  ipcMain.handle("session:update-plan", (_event, { sessionId, markdown }: { sessionId: string; markdown: string }) => {
-    if (!repoRoot) return { ok: false, error: "No repo root" };
-    try {
-      const state = loadStateFromDisk(repoRoot);
-      if (!state) return { ok: false, error: "No state file" };
-      const session = state.sessions.find(s => s.id === sessionId);
-      if (!session) return { ok: false, error: "Session not found" };
-      session.planMarkdown = markdown;
-      session.planStatus = "ready";
-      saveStateToDisk(repoRoot, state);
-      return { ok: true };
-    } catch (err: any) {
-      return { ok: false, error: err.message };
-    }
   });
 
   // Reorder sessions of a given lifecycle
@@ -967,7 +982,6 @@ app.on("window-all-closed", () => {
 });
 
 app.on("before-quit", () => {
-  stopPlanner();
   stateWatcher?.close();
   ptyManager?.killAll();
   socketServer?.stop();

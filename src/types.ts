@@ -2,7 +2,6 @@ import type { ChildProcess } from "node:child_process";
 
 export type SessionLifecycle = "todo" | "in_progress" | "completed";
 export type TodoType = "bug" | "feature" | "improvement";
-export type PlanStatus = "pending" | "planning" | "ready" | "failed";
 
 export interface Session {
   id: string;
@@ -18,7 +17,7 @@ export interface Session {
   mergedTo?: string;
   todoType?: TodoType;
   description?: string;
-  planStatus?: PlanStatus;
+  planStatus?: string;
   planMarkdown?: string;
   sourceNoteId?: string | null;
   folderId?: string | null;

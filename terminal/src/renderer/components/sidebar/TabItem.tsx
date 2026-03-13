@@ -141,18 +141,6 @@ export default function TabItem({ session, isActive, onClick, onDelete, draggabl
           {/* Right side badge/info */}
           {isTodo ? (
             <span className="flex items-center gap-0.5 flex-shrink-0">
-              {session.planStatus === "pending" && (
-                <span className="text-[11px] text-gray-500 flex items-center justify-center w-5 h-5" title="Plan pending">&#x25CC;</span>
-              )}
-              {session.planStatus === "planning" && (
-                <span className="text-[11px] text-accent-bright animate-pulse flex items-center justify-center w-5 h-5" title="Planning...">&#x25D1;</span>
-              )}
-              {session.planStatus === "ready" && (
-                <span className="text-[11px] text-green-400 flex items-center justify-center w-5 h-5" title="Plan ready">&#x25CF;</span>
-              )}
-              {session.planStatus === "failed" && (
-                <span className="text-[11px] text-red-400 flex items-center justify-center w-5 h-5" title="Plan failed">&#x2715;</span>
-              )}
               <button
                 className="w-5 h-5 rounded text-accent hover:bg-accent/20 transition-colors flex items-center justify-center"
                 onClick={handleStartTodo}
