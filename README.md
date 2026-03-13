@@ -54,7 +54,9 @@ npm install && npm run build && npm link
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+We're building Volley in the open — contributions, ideas, and bug reports are welcome.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## License
 
