@@ -4,6 +4,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import { WebglAddon } from "@xterm/addon-webgl";
 import type { SessionState, SessionLifecycle, TodoType } from "./types";
 import { volleyTheme } from "../constants/theme";
+import { playSound } from "../services/sound-service";
 
 interface SessionStore {
   sessions: Map<string, SessionState>;
@@ -505,6 +506,7 @@ function createSessionStore() {
       runExitCode: null,
     });
     set({ sessions: next });
+    playSound("sessionPaused");
   },
 
   resumeSession: (sessionId) => {
@@ -547,6 +549,7 @@ function createSessionStore() {
       fitAddon,
     });
     set({ sessions: next });
+    playSound("sessionStarted");
   },
 
   clearAllSessions: () => {

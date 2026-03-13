@@ -3,11 +3,18 @@ import { useSessionStore } from "../store/session-store";
 import { useProjectStore } from "../store/project-store";
 import { useNoteStore } from "../store/note-store";
 import { useUiStore } from "../store/ui-store";
+import { playSound } from "../services/sound-service";
 
 let setupWarningShown = false;
+let soundReady = false;
 
 export function useIpcListeners() {
   useEffect(() => {
+    // Load sound settings, delay enabling sounds so startup session restores are silent
+    useUiStore.getState().loadSoundSettings();
+    soundReady = false;
+    setTimeout(() => { soundReady = true; }, 3000);
+
     // Fetch all initial data, then mark the app ready
     Promise.all([
       window.volley.config.getStartCommand().then(({ command }) => {
@@ -40,7 +47,9 @@ export function useIpcListeners() {
       // Ignore exit events for paused sessions — the PTY was killed intentionally
       if (session?.status === "paused") return;
       store.setStatus(sessionId, "exited");
-      store.setExitCode(sessionId, typeof exitCode === "number" ? exitCode : 1);
+      const code = typeof exitCode === "number" ? exitCode : 1;
+      store.setExitCode(sessionId, code);
+      if (code !== 0) playSound("sessionError");
     });
 
     window.volley.session.onPending(({ pendingId, task }) => {
@@ -68,6 +77,7 @@ export function useIpcListeners() {
     window.volley.session.onSetupFailed(({ pendingId, error }) => {
       console.log("[renderer] session:setup-failed", pendingId, error);
       useSessionStore.getState().setPendingFailed(pendingId, error);
+      playSound("sessionError");
     });
 
     window.volley.session.onSetupWarning(({ task, error }) => {
@@ -86,6 +96,7 @@ export function useIpcListeners() {
     window.volley.session.onOpened((session) => {
       console.log("[renderer] session:opened", session);
       useSessionStore.getState().addSession(session);
+      if (soundReady) playSound("sessionStarted");
     });
 
     window.volley.session.onAutoStart(({ sessionId }) => {
