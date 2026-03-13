@@ -7,40 +7,49 @@ import {
 } from "@/lib/constants";
 import { AppFrame } from "./app-frame";
 import { FakeSidebar, type FakeSession } from "./fake-sidebar";
-import { FakeGridView } from "./fake-grid-view";
+import { FakeNoteEditor } from "./fake-note-editor";
+import { FakeTodoPlan } from "./fake-todo-plan";
 import { FakeSessionHeader } from "./fake-session-header";
 import { FakeAgentMessages } from "./fake-agent-cell";
 import { FakePromptInput } from "./fake-prompt-input";
 import { FakeCommitModal } from "./fake-commit-modal";
 
 type Phase =
-  | "sidebar-idle"
-  | "sessions-appearing"
-  | "grid-view"
-  | "agents-working"
-  | "zoom-session"
+  | "note-editing"
+  | "generate-todos"
+  | "show-plan"
+  | "session-active"
   | "show-commit"
   | "typing-commit"
   | "committed"
-  | "back-to-grid"
-  | "all-done";
+  | "session-done";
 
 export function TerminalShowcase() {
-  const [phase, setPhase] = useState<Phase>("sidebar-idle");
-  const [sessionCount, setSessionCount] = useState(1);
-  const [isGridView, setIsGridView] = useState(false);
+  const [phase, setPhase] = useState<Phase>("note-editing");
+  const [sessionCount, setSessionCount] = useState(0);
   const [statuses, setStatuses] = useState<
     ("pending" | "running" | "idle" | "done")[]
-  >(["idle", "pending", "pending", "pending"]);
+  >(["pending", "pending", "pending", "pending"]);
 
-  // Per-pane visible message counts (drives the agent conversation reveal)
+  // Per-pane visible message counts (only pane 0 is displayed)
   const [msgCounts, setMsgCounts] = useState([0, 0, 0, 0]);
   const msgIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Note editor state
+  const [noteLineCount, setNoteLineCount] = useState(0);
+  const [generateVisible, setGenerateVisible] = useState(false);
+  const [generateActive, setGenerateActive] = useState(false);
+
+  // Plan view state
+  const [planItemCount, setPlanItemCount] = useState(0);
+  const [startingIndex, setStartingIndex] = useState<number | null>(null);
+
+  // Commit state
   const [commitModalVisible, setCommitModalVisible] = useState(false);
   const [commitTyping, setCommitTyping] = useState(false);
   const [committed, setCommitted] = useState(false);
   const [pushedBadge, setPushedBadge] = useState(false);
+
   const timeoutRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const clearTimeouts = useCallback(() => {
@@ -59,112 +68,122 @@ export function TerminalShowcase() {
   }, []);
 
   const resetState = useCallback(() => {
-    setPhase("sidebar-idle");
-    setSessionCount(1);
-    setIsGridView(false);
-    setStatuses(["idle", "pending", "pending", "pending"]);
+    setPhase("note-editing");
+    setSessionCount(0);
+    setStatuses(["pending", "pending", "pending", "pending"]);
     setMsgCounts([0, 0, 0, 0]);
+    setNoteLineCount(0);
+    setGenerateVisible(false);
+    setGenerateActive(false);
+    setPlanItemCount(0);
+    setStartingIndex(null);
     setCommitModalVisible(false);
     setCommitTyping(false);
     setCommitted(false);
     setPushedBadge(false);
   }, []);
 
-  /** Start staggered message reveal across all 4 panes */
+  /** Stream messages for pane 0 one at a time */
   const startMessageStreaming = useCallback(() => {
-    const maxLens = SHOWCASE_AGENT_FLOWS.map((flow) => flow.length);
-    const counters = [0, 0, 0, 0];
-    let tick = 0;
+    const maxLen = SHOWCASE_AGENT_FLOWS[0].length;
+    let count = 0;
 
     msgIntervalRef.current = setInterval(() => {
-      tick++;
-      for (let i = 0; i < 4; i++) {
-        if (
-          tick >= i + 1 &&
-          (tick - (i + 1)) % 2 === 0 &&
-          counters[i] < maxLens[i]
-        ) {
-          counters[i]++;
-        }
+      count++;
+      if (count <= maxLen) {
+        setMsgCounts([count, 0, 0, 0]);
       }
-      setMsgCounts([...counters]);
-
-      if (counters.every((c, i) => c >= maxLens[i])) {
+      if (count >= maxLen) {
         if (msgIntervalRef.current) {
           clearInterval(msgIntervalRef.current);
           msgIntervalRef.current = null;
         }
       }
-    }, 350);
+    }, 450);
   }, []);
 
   const runAnimation = useCallback(() => {
     clearTimeouts();
     resetState();
 
-    // Act 1: Multi-session blitz
+    // ── Act 1: Note → Generate Todos ──────────────────────
 
+    // Lines appear one by one
+    schedule(() => setNoteLineCount(1), 500);
+    schedule(() => setNoteLineCount(2), 1000);
+    schedule(() => setNoteLineCount(3), 1500);
+    schedule(() => setNoteLineCount(4), 2000);
+
+    // Generate button appears, then activates
+    schedule(() => setGenerateVisible(true), 2700);
     schedule(() => {
-      setSessionCount(2);
-      setPhase("sessions-appearing");
-    }, 1000);
+      setGenerateActive(true);
+      setPhase("generate-todos");
+    }, 3300);
 
-    schedule(() => setSessionCount(3), 2500);
-    schedule(() => setSessionCount(4), 4000);
+    // Todos appear in sidebar one by one
+    schedule(() => setSessionCount(1), 3800);
+    schedule(() => setSessionCount(2), 4200);
+    schedule(() => setSessionCount(3), 4600);
+    schedule(() => setSessionCount(4), 5000);
 
+    // ── Act 2: Todo plan view ─────────────────────────────
+
+    // Switch from note editor to plan view
     schedule(() => {
-      setIsGridView(true);
-      setPhase("grid-view");
-    }, 5000);
+      setPhase("show-plan");
+    }, 5800);
 
+    // Plan items appear with stagger
+    schedule(() => setPlanItemCount(1), 6000);
+    schedule(() => setPlanItemCount(2), 6200);
+    schedule(() => setPlanItemCount(3), 6400);
+    schedule(() => setPlanItemCount(4), 6600);
+
+    // First item highlights (about to start)
+    schedule(() => setStartingIndex(0), 7400);
+
+    // ── Act 3: Session runs ───────────────────────────────
+
+    // First todo becomes a running session
     schedule(() => {
-      setStatuses(["running", "running", "running", "running"]);
-      setPhase("agents-working");
+      setPhase("session-active");
+      setStatuses(["running", "pending", "pending", "pending"]);
       startMessageStreaming();
-    }, 5500);
+    }, 8000);
 
-    // Act 2: Workflow zoom
-
-    schedule(() => {
-      setIsGridView(false);
-      setMsgCounts((prev) => {
-        const next = [...prev];
-        next[0] = SHOWCASE_AGENT_FLOWS[0].length;
-        return next;
-      });
-      setPhase("zoom-session");
-    }, 9000);
+    // ── Act 4: Commit & done ──────────────────────────────
 
     schedule(() => {
       setCommitModalVisible(true);
       setPhase("show-commit");
-    }, 11000);
+    }, 12200);
 
     schedule(() => {
       setCommitTyping(true);
       setPhase("typing-commit");
-    }, 11500);
+    }, 12700);
 
     schedule(() => {
       setCommitted(true);
       setPhase("committed");
-    }, 13000);
+    }, 14200);
 
     schedule(() => {
       setCommitModalVisible(false);
       setPushedBadge(true);
-    }, 13500);
+    }, 14700);
 
     schedule(() => {
-      setIsGridView(true);
-      setStatuses(["done", "done", "done", "done"]);
-      setMsgCounts(SHOWCASE_AGENT_FLOWS.map((f) => f.length));
-      setPhase("all-done");
-    }, 14500);
+      setStatuses(["done", "pending", "pending", "pending"]);
+      setMsgCounts([SHOWCASE_AGENT_FLOWS[0].length, 0, 0, 0]);
+      setPhase("session-done");
+    }, 15200);
 
+    // Loop
     schedule(() => {
       runAnimation();
-    }, 17000);
+    }, 18000);
   }, [clearTimeouts, resetState, schedule, startMessageStreaming]);
 
   useEffect(() => {
@@ -172,16 +191,34 @@ export function TerminalShowcase() {
     return () => clearTimeouts();
   }, [runAnimation, clearTimeouts]);
 
+  // ── Derived state ────────────────────────────────────────
+
+  const showNoteEditor =
+    phase === "note-editing" || phase === "generate-todos";
+
+  const showPlan = phase === "show-plan";
+
+  const showSession = !showNoteEditor && !showPlan;
+
+  const isBusy = showSession && statuses[0] === "running";
+
+  const activeNote = showNoteEditor ? "Sprint planning" : null;
+
+  // Highlight first session in sidebar when starting from plan or during session
+  const activeSlug = showSession
+    ? SHOWCASE_SESSIONS[0].slug
+    : startingIndex !== null
+      ? SHOWCASE_SESSIONS[startingIndex].slug
+      : null;
+
   // Build sidebar sessions with lifecycle data
   const sidebarSessions: FakeSession[] = SHOWCASE_SESSIONS.map((s, i) => {
     const status = statuses[i];
     const visible = i < sessionCount;
 
-    // Determine lifecycle from animation phase and status
     let lifecycle: FakeSession["lifecycle"] = "todo";
     if (status === "running") lifecycle = "in_progress";
     else if (status === "done") lifecycle = "completed";
-    else if (status === "idle" && i === 0) lifecycle = "in_progress";
 
     return {
       slug: s.slug,
@@ -190,23 +227,19 @@ export function TerminalShowcase() {
       status,
       lifecycle,
       visible,
-      elapsed: lifecycle === "in_progress"
-        ? status === "running" ? "0:12" : "0:00"
-        : lifecycle === "completed" ? "2:34" : undefined,
-      stats: lifecycle === "in_progress" && status === "running"
-        ? { files: i + 1, insertions: (i + 1) * 12, deletions: i * 3 }
-        : undefined,
-      agentStatus: status === "running" ? (i % 2 === 0 ? "thinking" : "coding") : null,
+      elapsed:
+        lifecycle === "in_progress"
+          ? "0:12"
+          : lifecycle === "completed"
+            ? "2:34"
+            : undefined,
+      stats:
+        lifecycle === "in_progress" && status === "running"
+          ? { files: 3, insertions: 42, deletions: 7 }
+          : undefined,
+      agentStatus: status === "running" ? "thinking" : null,
     };
   });
-
-  const isZoomed =
-    phase === "zoom-session" ||
-    phase === "show-commit" ||
-    phase === "typing-commit" ||
-    phase === "committed";
-
-  const isBusy = isZoomed && statuses[0] === "running";
 
   return (
     <AppFrame>
@@ -214,20 +247,28 @@ export function TerminalShowcase() {
         {/* Sidebar */}
         <FakeSidebar
           sessions={sidebarSessions}
-          activeSlug={isZoomed ? SHOWCASE_SESSIONS[0].slug : null}
+          activeSlug={activeSlug}
+          activeNote={activeNote}
           className="hidden sm:flex border-r border-white/[0.06]"
         />
 
         {/* Main content */}
         <div className="flex-1 flex flex-col relative overflow-hidden">
-          {isGridView ? (
-            /* ── Grid view: 4 cells with compact headers + messages + inputs ── */
-            <FakeGridView
-              visibleMsgCounts={msgCounts}
-              statuses={statuses}
+          {showNoteEditor ? (
+            /* ── Note editor: lines appear, then generate todos ── */
+            <FakeNoteEditor
+              visibleLines={noteLineCount}
+              generateVisible={generateVisible}
+              generateActive={generateActive}
             />
-          ) : isZoomed ? (
-            /* ── Zoomed single-session: SessionHeader + AgentMessages + TerminalPrompt ── */
+          ) : showPlan ? (
+            /* ── Todo plan: items with start buttons ── */
+            <FakeTodoPlan
+              visibleItems={planItemCount}
+              startingIndex={startingIndex}
+            />
+          ) : (
+            /* ── Single session view ── */
             <>
               <FakeSessionHeader
                 slug={SHOWCASE_SESSIONS[0].slug}
@@ -247,21 +288,6 @@ export function TerminalShowcase() {
                   </span>
                 </div>
               )}
-            </>
-          ) : (
-            /* ── Single session (pre-grid): SessionHeader + AgentMessages + TerminalPrompt ── */
-            <>
-              <FakeSessionHeader
-                slug={SHOWCASE_SESSIONS[0].slug}
-                branch={SHOWCASE_SESSIONS[0].branch}
-                baseBranch="main"
-                status={statuses[0]}
-              />
-              <FakeAgentMessages
-                messages={SHOWCASE_AGENT_FLOWS[0]}
-                visibleCount={msgCounts[0]}
-              />
-              <FakePromptInput />
             </>
           )}
 
