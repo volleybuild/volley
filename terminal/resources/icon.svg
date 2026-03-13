@@ -1,34 +1,42 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
   <!-- Background -->
-  <rect width="1024" height="1024" rx="228" fill="#08080c"/>
+  <rect width="1024" height="1024" rx="228" fill="#0a0c0f"/>
 
-  <!-- Subtle radial glow behind the mark -->
-  <radialGradient id="bg-glow" cx="460" cy="480" r="400" gradientUnits="userSpaceOnUse">
+  <!-- Subtle radial glow behind the dots -->
+  <radialGradient id="bg-glow" cx="512" cy="460" r="400" gradientUnits="userSpaceOnUse">
     <stop offset="0" stop-color="#0f1a1a"/>
-    <stop offset="1" stop-color="#08080c"/>
+    <stop offset="1" stop-color="#0a0c0f"/>
   </radialGradient>
   <rect width="1024" height="1024" rx="228" fill="url(#bg-glow)"/>
 
   <defs>
-    <linearGradient id="cGrad" x1="480" y1="280" x2="720" y2="720" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#6ee7b7"/>
-      <stop offset="1" stop-color="#10b981"/>
-    </linearGradient>
-    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="b"/>
-      <feColorMatrix in="b" type="matrix" values="0 0 0 0 0.2  0 0 0 0 0.83  0 0 0 0 0.6  0 0 0 0.5 0" result="c"/>
+    <!-- Per-dot glow filters -->
+    <filter id="glow-mint" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="24" result="b"/>
+      <feColorMatrix in="b" type="matrix" values="0 0 0 0 0.2 0 0 0 0 0.83 0 0 0 0 0.6 0 0 0 0.4 0" result="c"/>
+      <feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-amber" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="24" result="b"/>
+      <feColorMatrix in="b" type="matrix" values="0 0 0 0 0.98 0 0 0 0 0.75 0 0 0 0 0.14 0 0 0 0.4 0" result="c"/>
+      <feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-violet" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="24" result="b"/>
+      <feColorMatrix in="b" type="matrix" values="0 0 0 0 0.65 0 0 0 0 0.55 0 0 0 0 0.97 0 0 0 0.4 0" result="c"/>
       <feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
 
-  <!-- Chevron 1 — leftmost -->
-  <path d="M260 280 L520 512 L260 744" stroke="#10b981" stroke-width="56" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.45"/>
-
-  <!-- Chevron 2 — middle -->
-  <path d="M390 280 L650 512 L390 744" stroke="#34d399" stroke-width="56" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.7"/>
-
-  <!-- Chevron 3 — front, brightest with glow -->
-  <g filter="url(#glow)">
-    <path d="M520 280 L780 512 L520 744" stroke="url(#cGrad)" stroke-width="62" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Three dots in V arrangement, scaled from 76x64 viewBox -->
+  <!-- Top-left: mint, Top-right: amber, Bottom-center: violet -->
+  <g filter="url(#glow-mint)">
+    <circle cx="320" cy="390" r="105" fill="#34d399"/>
+  </g>
+  <g filter="url(#glow-amber)">
+    <circle cx="704" cy="390" r="105" fill="#fbbf24"/>
+  </g>
+  <g filter="url(#glow-violet)">
+    <circle cx="512" cy="634" r="105" fill="#a78bfa"/>
   </g>
 </svg>

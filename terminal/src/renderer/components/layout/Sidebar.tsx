@@ -472,16 +472,10 @@ export default function Sidebar() {
       </div>
       <div className="titlebar-drag pl-20 pr-2 h-9 flex items-center justify-between flex-shrink-0">
         <span className="text-gray-500 text-[11px] tracking-wide flex items-center gap-1.5">
-          <svg
-            width="16"
-            height="14"
-            viewBox="0 0 48 40"
-            fill="none"
-            className="text-accent-bright"
-          >
-            <path d="M8 4L24 20L8 36" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" opacity="0.35" />
-            <path d="M18 4L34 20L18 36" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" opacity="0.6" />
-            <path d="M28 4L44 20L28 36" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+          <svg width="16" height="13" viewBox="0 0 76 64" fill="none">
+            <circle cx="15" cy="15" r="15" fill="#34d399" />
+            <circle cx="61" cy="15" r="15" fill="#fbbf24" />
+            <circle cx="38" cy="49" r="15" fill="#a78bfa" />
           </svg>
           <ProjectDropdown />
         </span>
