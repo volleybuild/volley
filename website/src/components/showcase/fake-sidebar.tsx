@@ -25,6 +25,10 @@ interface FakeSidebarProps {
   sessions: FakeSession[];
   activeSlug: string | null;
   className?: string;
+  /** Name of the note currently being edited (highlighted in sidebar) */
+  activeNote?: string | null;
+  /** Hide the notes section entirely */
+  hideNotes?: boolean;
 }
 
 /* ── SidebarSection (matches SidebarSection.tsx) ───────────────── */
@@ -276,6 +280,8 @@ export function FakeSidebar({
   sessions,
   activeSlug,
   className = "",
+  activeNote = null,
+  hideNotes = false,
 }: FakeSidebarProps) {
   const visible = sessions.filter((s) => s.visible);
   const todos = visible.filter((s) => s.lifecycle === "todo");
@@ -295,10 +301,10 @@ export function FakeSidebar({
           <span className="w-[10px] h-[10px] rounded-full bg-[#28c840]" />
         </div>
         <span className="flex-1 flex items-center gap-1.5 text-gray-500 text-[11px] tracking-wide">
-          <svg width="16" height="14" viewBox="0 0 48 40" fill="none" className="text-accent-bright flex-shrink-0">
-            <path d="M8 4L24 20L8 36" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" opacity="0.35" />
-            <path d="M18 4L34 20L18 36" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" opacity="0.6" />
-            <path d="M28 4L44 20L28 36" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+          <svg width="16" height="13" viewBox="0 0 76 64" fill="none" className="flex-shrink-0">
+            <circle cx="15" cy="15" r="15" fill="#34d399" />
+            <circle cx="61" cy="15" r="15" fill="#fbbf24" />
+            <circle cx="38" cy="49" r="15" fill="#a78bfa" />
           </svg>
         </span>
         {/* Grid toggle button */}
@@ -312,6 +318,27 @@ export function FakeSidebar({
         </span>
       </div>
 
+      {/* Search input (decorative) */}
+      <div className="px-3 pb-1 flex-shrink-0">
+        <div className="flex items-center gap-1.5 px-2 py-[5px] rounded-md bg-white/[0.03]">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="flex-shrink-0 text-gray-600"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <span className="flex-1 text-[12px] text-gray-600 italic tracking-wide">
+            Filter...
+          </span>
+        </div>
+      </div>
+
       {/* Sessions header */}
       <div className="px-3 py-1.5 flex-shrink-0 flex items-center justify-between">
         <span className="text-[10px] font-medium text-vo-text-muted uppercase tracking-wider">
@@ -321,6 +348,34 @@ export function FakeSidebar({
 
       {/* Sections */}
       <div className="flex-1 overflow-y-auto px-1.5">
+        {/* Notes section */}
+        {!hideNotes && <Section title="Notes" count={2}>
+          {/* Sprint planning note — highlighted when being edited */}
+          <div
+            className={`flex items-start gap-2 px-2.5 py-2 rounded text-xs relative transition-colors duration-150 ${
+              activeNote === "Sprint planning" ? "bg-white/[0.03]" : ""
+            }`}
+          >
+            {activeNote === "Sprint planning" && (
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 rounded-r bg-accent-bright" />
+            )}
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`mt-[3px] flex-shrink-0 ${activeNote === "Sprint planning" ? "text-accent-dim" : "text-gray-500"}`}>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <span className={`truncate ${activeNote === "Sprint planning" ? "text-gray-200" : "text-gray-400"}`}>
+              Sprint planning
+            </span>
+          </div>
+          <div className="flex items-start gap-2 px-2.5 py-2 rounded text-xs">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mt-[3px] flex-shrink-0 text-gray-500">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <span className="truncate text-gray-400">API design ideas</span>
+          </div>
+        </Section>}
+
         {todos.length > 0 && (
           <Section title="Todo" count={todos.length} showAdd>
             {todos.map((s) => (

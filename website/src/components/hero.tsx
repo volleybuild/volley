@@ -1,6 +1,27 @@
 "use client";
 
 import { Button } from "./ui/button";
+import {
+  RotatingTextContainer,
+  RotatingText,
+  useRotatingText,
+} from "./animate-ui/primitives/texts/rotating";
+
+const WORDS = ["Plan", "Build", "Ship"];
+const COLORS: Record<string, string> = {
+  Plan: "#34d399",
+  Build: "#fbbf24",
+  Ship: "#a78bfa",
+};
+
+function ColoredRotatingText() {
+  const { currentText } = useRotatingText();
+  return (
+    <RotatingText
+      style={{ color: COLORS[currentText] }}
+    />
+  );
+}
 
 export function Hero({ children }: { children?: React.ReactNode }) {
   return (
@@ -17,15 +38,19 @@ export function Hero({ children }: { children?: React.ReactNode }) {
       {/* Content */}
       <div className="relative z-10 text-center max-w-3xl mx-auto mb-14">
         <h1 className="font-display font-bold text-4xl sm:text-5xl md:text-6xl text-white tracking-tight leading-[1.1]">
-          Run{" "}
-          <span className="bg-gradient-to-r from-accent-bright to-accent bg-clip-text text-transparent">
-            parallel
-          </span>{" "}
-          AI coding sessions
+          <RotatingTextContainer
+            text={WORDS}
+            duration={2400}
+            className="inline-flex justify-center align-bottom"
+            style={{ width: "3.1ch", paddingBlock: 0 }}
+          >
+            <ColoredRotatingText />
+          </RotatingTextContainer>{" "}
+          with parallel AI coding agents
         </h1>
         <p className="mt-5 text-lg text-vo-text-secondary max-w-xl mx-auto leading-relaxed">
-          An open-source desktop app for running multiple AI sessions at once.
-          Built-in git, grid view, and project management.
+          An open-source desktop app for dispatching parallel AI coding agents.
+          Built-in git, notes, todo planning, and grid view.
         </p>
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Button variant="primary" href="https://github.com/volleybuild/volley/releases/latest">Download for Mac</Button>

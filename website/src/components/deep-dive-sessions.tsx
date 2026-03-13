@@ -36,83 +36,72 @@ const INITIAL_SESSIONS: FakeSession[] = [
     visible: true,
     elapsed: "2h ago",
   },
-  {
-    slug: "update-readme",
-    name: "Update README",
-    branch: "",
-    status: "pending",
-    lifecycle: "todo",
-    visible: true,
-  },
 ];
 
 export function DeepDiveSessions() {
   const [sessions, setSessions] = useState<FakeSession[]>(INITIAL_SESSIONS);
-  const [activeSlug, setActiveSlug] = useState<string | null>("auth-middleware");
+  const [activeSlug, setActiveSlug] = useState<string | null>(
+    "auth-middleware",
+  );
 
   useEffect(() => {
-    // New todo appears
+    // Update api-tests stats
     const t1 = setTimeout(() => {
-      setSessions((prev) => [
-        ...prev,
-        {
-          slug: "setup-ci",
-          name: "Setup CI pipeline",
-          branch: "",
-          status: "pending",
-          lifecycle: "todo" as const,
-          visible: true,
-        },
-      ]);
-    }, 1500);
-
-    // Start working on api-tests — switch to it
-    const t2 = setTimeout(() => {
       setActiveSlug("api-tests");
       setSessions((prev) =>
         prev.map((s) =>
           s.slug === "api-tests"
-            ? { ...s, stats: { files: 2, insertions: 56, deletions: 3 }, elapsed: "1:05" }
+            ? {
+                ...s,
+                stats: { files: 2, insertions: 56, deletions: 3 },
+                elapsed: "1:05",
+              }
             : s,
         ),
       );
     }, 2500);
 
     // Auth middleware completes
-    const t3 = setTimeout(() => {
+    const t2 = setTimeout(() => {
       setSessions((prev) =>
         prev.map((s) =>
           s.slug === "auth-middleware"
-            ? { ...s, status: "done" as const, lifecycle: "completed" as const, elapsed: "3m ago", agentStatus: null, stats: undefined }
+            ? {
+                ...s,
+                status: "done" as const,
+                lifecycle: "completed" as const,
+                elapsed: "3m ago",
+                agentStatus: null,
+                stats: undefined,
+              }
             : s,
         ),
       );
     }, 4000);
 
-    // Start a todo
-    const t4 = setTimeout(() => {
+    // Api-tests completes
+    const t3 = setTimeout(() => {
       setSessions((prev) =>
         prev.map((s) =>
-          s.slug === "update-readme"
+          s.slug === "api-tests"
             ? {
                 ...s,
-                status: "running" as const,
-                lifecycle: "in_progress" as const,
-                branch: "docs/readme",
-                elapsed: "0:02",
-                agentStatus: "thinking" as const,
+                status: "done" as const,
+                lifecycle: "completed" as const,
+                elapsed: "1m ago",
+                agentStatus: null,
+                stats: undefined,
               }
             : s,
         ),
       );
-      setActiveSlug("update-readme");
+      setActiveSlug(null);
     }, 5500);
 
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
-      clearTimeout(t4);
     };
   }, []);
 
@@ -122,6 +111,7 @@ export function DeepDiveSessions() {
         <FakeSidebar
           sessions={sessions}
           activeSlug={activeSlug}
+          hideNotes
           className="w-full border-none"
         />
       </div>

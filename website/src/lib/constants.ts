@@ -7,40 +7,40 @@ export interface Feature {
 
 export const FEATURES: Feature[] = [
   {
+    title: "Notes",
+    description:
+      "Capture ideas in freeform notes. Organize in folders and by type, then generate todos when you're ready.",
+    icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8",
+  },
+  {
+    title: "Todos",
+    description:
+      "Plan work as todos and start sessions directly from the list. Each one gets its own branch automatically.",
+    icon: "M12 2a10 10 0 1 0 10 10M12 2v10l7-4",
+  },
+  {
     title: "Parallel sessions",
     description:
       "Run multiple AI coding sessions at the same time. Each one gets its own branch and workspace.",
     icon: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z",
   },
   {
-    title: "Built-in git",
-    description:
-      "Commit, push, and manage branches from inside the app. Diff stats update live per session.",
-    icon: "M6 3v12M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 9a9 9 0 0 1-9 9",
-  },
-  {
     title: "Grid view",
     description:
-      "See all sessions at once in a grid. Useful for keeping track of what's running.",
+      "See all sessions at once in a grid. Each pane shows what the agent is doing in real time.",
     icon: "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z",
+  },
+  {
+    title: "Built-in git",
+    description:
+      "Commit, push, and manage branches from a dropdown. Diff stats update live per session.",
+    icon: "M6 3v12M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 9a9 9 0 0 1-9 9",
   },
   {
     title: "Project switching",
     description:
       "Switch between repos. Volley auto-detects projects and keeps state per-project.",
     icon: "M3 7l9-4 9 4M3 7v10l9 4M3 7l9 4M21 7v10l-9 4M21 7l-9 4M12 11v11",
-  },
-  {
-    title: "Session lifecycle",
-    description:
-      "Sessions move through todo, in progress, and completed. Pick up where you left off.",
-    icon: "M12 2a10 10 0 1 0 10 10M12 2v10l7-4",
-  },
-  {
-    title: "Powered by Claude",
-    description:
-      "Uses the Claude agent SDK under the hood. Bring your own Anthropic API key.",
-    icon: "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5",
   },
 ];
 
