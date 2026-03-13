@@ -26,7 +26,7 @@
 Download the latest `.dmg` from the [Releases page](https://github.com/volleybuild/volley/releases/latest) and drag it to Applications.
 
 > [!WARNING]
-> You need a Claude API key for Volley to work. Add it in Settings after launching.
+> You need a Claude API key or an active Claude subscription (Pro, Max) to use Volley. Add your key or sign in via Settings after launching.
 
 macOS only for now. Windows & Linux coming soon.
 
