@@ -173,14 +173,13 @@ async function handleCommit() {
 
 async function handlePush() {
   const { activeSessionId } = useSessionStore.getState();
-  const { addToast, bumpGitAction, setRightPaneView } = useUiStore.getState();
+  const { addToast, bumpGitAction } = useUiStore.getState();
   if (!activeSessionId) return;
 
-  // If already pushed (no unpushed commits), open PR pane instead
   try {
     const status = await window.volley.git.sessionStatus(activeSessionId);
-    if (status.unpushed === 0 && status.uncommitted === 0) {
-      setRightPaneView("pr");
+    if (status.unpushed === 0) {
+      addToast("Nothing to push", "info");
       return;
     }
   } catch { /* proceed with push */ }
@@ -189,8 +188,7 @@ async function handlePush() {
   const result = await window.volley.git.push(activeSessionId);
   if (result.ok) {
     bumpGitAction();
-    setRightPaneView("pr");
-    addToast("Pushed — create a PR", "success");
+    addToast("Pushed to origin", "success");
   } else {
     addToast(result.error || "Push failed", "error");
   }

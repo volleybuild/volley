@@ -162,7 +162,7 @@ export default function AgentPane({ sessionId, visible, className = "" }: Props)
       </div>
 
       {/* Prompt input */}
-      <TerminalPrompt sessionId={sessionId} disabled={hasKey === false} />
+      <TerminalPrompt sessionId={sessionId} disabled={hasKey === false} visible={visible} />
       <DiffStatFooter sessionId={sessionId} />
     </div>
   );

@@ -160,6 +160,9 @@ contextBridge.exposeInMainWorld("volley", {
     land(sessionId: string): Promise<{ ok: boolean; baseBranch?: string; error?: string }> {
       return ipcRenderer.invoke("git:land", { sessionId });
     },
+    pushBaseBranch(baseBranch: string): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("git:push-base-branch", { baseBranch });
+    },
     listBranches(): Promise<{ branches: { name: string; remote: boolean }[]; current: string }> {
       return ipcRenderer.invoke("git:list-branches");
     },

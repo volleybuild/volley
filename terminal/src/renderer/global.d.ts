@@ -135,6 +135,7 @@ interface VolleyApi {
     createPr(sessionId: string, title: string, body: string, base: string): Promise<{ ok: boolean; url?: string; prUrl?: string; error?: string }>;
     mergeSource(sessionId: string): Promise<{ ok: boolean; output?: string; error?: string; conflicts?: string[] }>;
     land(sessionId: string): Promise<{ ok: boolean; baseBranch?: string; error?: string }>;
+    pushBaseBranch(baseBranch: string): Promise<{ ok: boolean; error?: string }>;
     listBranches(): Promise<{ branches: { name: string; remote: boolean }[]; current: string }>;
   };
   run: {

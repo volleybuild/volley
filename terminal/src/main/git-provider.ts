@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 
-export type ProviderName = "github" | "gitlab" | "bitbucket" | "unknown";
+export type ProviderName = "github" | "gitlab" | "bitbucket" | "azure" | "unknown";
 
 export interface ProviderInfo {
   provider: ProviderName;
@@ -13,6 +13,8 @@ const HOST_MAP: Record<string, ProviderName> = {
   "github.com": "github",
   "gitlab.com": "gitlab",
   "bitbucket.org": "bitbucket",
+  "dev.azure.com": "azure",
+  "ssh.dev.azure.com": "azure",
 };
 
 const CLI_MAP: Record<string, string> = {
@@ -40,7 +42,7 @@ export function detectProvider(remoteUrl: string): { provider: ProviderName; rep
   if (httpsMatch) {
     const host = httpsMatch[1];
     const repoPath = httpsMatch[2];
-    const provider = HOST_MAP[host] || "unknown";
+    const provider = HOST_MAP[host] || (host.endsWith(".visualstudio.com") ? "azure" : "unknown");
     return { provider, repoPath };
   }
 
@@ -77,12 +79,16 @@ export function getProviderInfo(cwd: string, overrideProvider?: ProviderName): P
   // Build web URL from the detected host
   let webUrl = "";
   if (provider !== "unknown" && repoPath) {
-    const hostMap: Record<string, string> = {
-      github: "https://github.com",
-      gitlab: "https://gitlab.com",
-      bitbucket: "https://bitbucket.org",
-    };
-    webUrl = `${hostMap[provider]}/${repoPath}`;
+    if (provider === "azure") {
+      webUrl = buildAzureWebUrl(remoteUrl, repoPath);
+    } else {
+      const hostMap: Record<string, string> = {
+        github: "https://github.com",
+        gitlab: "https://gitlab.com",
+        bitbucket: "https://bitbucket.org",
+      };
+      webUrl = `${hostMap[provider]}/${repoPath}`;
+    }
   }
 
   const cli = CLI_MAP[provider];
@@ -105,6 +111,36 @@ export function getDefaultBranch(cwd: string): string {
   }
 }
 
+/**
+ * Build the web URL for an Azure DevOps remote.
+ * SSH paths use v3/org/project/repo → https://dev.azure.com/org/project/_git/repo
+ * HTTPS paths already contain org/project/_git/repo.
+ * Legacy visualstudio.com URLs use https://{host}/{repoPath}.
+ */
+function buildAzureWebUrl(remoteUrl: string, repoPath: string): string {
+  // SSH: repoPath = "v3/org/project/repo"
+  if (remoteUrl.startsWith("git@")) {
+    const parts = repoPath.replace(/^v3\//, "").split("/");
+    if (parts.length >= 3) {
+      const [org, project, ...repoParts] = parts;
+      const repo = repoParts.join("/");
+      return `https://dev.azure.com/${org}/${project}/_git/${repo}`;
+    }
+  }
+
+  // HTTPS legacy: https://{org}.visualstudio.com/project/_git/repo
+  const httpsMatch = remoteUrl.match(/^https?:\/\/([^/]+)\//);
+  if (httpsMatch) {
+    const host = httpsMatch[1];
+    if (host.endsWith(".visualstudio.com")) {
+      return `https://${host}/${repoPath}`;
+    }
+  }
+
+  // HTTPS new: https://dev.azure.com/org/project/_git/repo — repoPath already correct
+  return `https://dev.azure.com/${repoPath}`;
+}
+
 /** Build a browser PR/MR URL for the provider. Returns null for unknown providers. */
 export function buildPrUrl(info: ProviderInfo, branch: string, baseBranch: string): string | null {
   switch (info.provider) {
@@ -114,6 +150,8 @@ export function buildPrUrl(info: ProviderInfo, branch: string, baseBranch: strin
       return `${info.webUrl}/-/merge_requests/new?merge_request[source_branch]=${encodeURIComponent(branch)}&merge_request[target_branch]=${encodeURIComponent(baseBranch)}`;
     case "bitbucket":
       return `${info.webUrl}/pull-requests/new?source=${encodeURIComponent(branch)}&dest=${encodeURIComponent(baseBranch)}`;
+    case "azure":
+      return `${info.webUrl}/pullrequestcreate?sourceRef=${encodeURIComponent(branch)}&targetRef=${encodeURIComponent(baseBranch)}`;
     default:
       return null;
   }

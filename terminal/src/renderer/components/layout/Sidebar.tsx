@@ -495,7 +495,7 @@ export default function Sidebar() {
       <SidebarSearch />
       <div className="flex-1 overflow-y-auto px-1.5">
         {/* Notes Section */}
-        {(activeNotes.length > 0 || (!sidebarSearch && sidebarSections.notes)) && (
+        {(activeNotes.length > 0 || !sidebarSearch) && (
           <SidebarSection
             title="Notes"
             count={activeNotes.length}
@@ -601,7 +601,7 @@ export default function Sidebar() {
         )}
 
         {/* Todo Section */}
-        {((sidebarSearch ? filteredAllTodos.length > 0 : allTodoSessions.length > 0) || (!sidebarSearch && sidebarSections.todo)) && (
+        {(!sidebarSearch || filteredAllTodos.length > 0) && (
           <SidebarSection
             title="Todo"
             count={todoViewMode === "type" ? filteredAllTodos.length : todoSessions.length}

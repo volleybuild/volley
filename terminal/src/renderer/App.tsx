@@ -18,6 +18,8 @@ import TodoModal from "./components/modals/TodoModal";
 import CommitModal from "./components/modals/CommitModal";
 import RemoveModal from "./components/modals/RemoveModal";
 import LandModal from "./components/modals/LandModal";
+import PullModal from "./components/modals/PullModal";
+import CompleteModal from "./components/modals/CompleteModal";
 import SwitchProjectModal from "./components/modals/SwitchProjectModal";
 import ToastContainer from "./components/shared/ToastContainer";
 import NoteEditor from "./components/notes/NoteEditor";
@@ -102,6 +104,8 @@ export default function App() {
       <CommitModal />
       <RemoveModal />
       <LandModal />
+      <PullModal />
+      <CompleteModal />
       <SwitchProjectModal />
       <ToastContainer />
       <SplashScreen />

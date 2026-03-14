@@ -30,6 +30,14 @@ interface UiStore {
   landSessionId: string | null;
   landBaseBranch: string;
   landSessionBranch: string;
+  pullModalOpen: boolean;
+  pullSessionId: string | null;
+  pullBaseBranch: string;
+  pullBehindCount: number;
+  completeModalOpen: boolean;
+  completeSessionId: string | null;
+  completeBaseBranch: string;
+  completeSessionBranch: string;
   toasts: Toast[];
   activeFilePath: string | null;
   gitActionVersion: number;
@@ -79,6 +87,10 @@ interface UiStore {
   closeRemoveModal: () => void;
   openLandModal: (sessionId: string, baseBranch: string, sessionBranch: string) => void;
   closeLandModal: () => void;
+  openPullModal: (sessionId: string, baseBranch: string, behindCount: number) => void;
+  closePullModal: () => void;
+  openCompleteModal: (sessionId: string, baseBranch: string, sessionBranch: string) => void;
+  closeCompleteModal: () => void;
   addToast: (message: string, type: Toast["type"]) => void;
   removeToast: (id: number) => void;
   setActiveFilePath: (path: string | null) => void;
@@ -137,6 +149,14 @@ function createUiStore() {
   landSessionId: null,
   landBaseBranch: "main",
   landSessionBranch: "",
+  pullModalOpen: false,
+  pullSessionId: null,
+  pullBaseBranch: "main",
+  pullBehindCount: 0,
+  completeModalOpen: false,
+  completeSessionId: null,
+  completeBaseBranch: "main",
+  completeSessionBranch: "",
   toasts: [],
   activeFilePath: null,
   gitActionVersion: 0,
@@ -225,6 +245,16 @@ function createUiStore() {
     set({ landModalOpen: true, landSessionId: sessionId, landBaseBranch: baseBranch, landSessionBranch: sessionBranch }),
   closeLandModal: () =>
     set({ landModalOpen: false, landSessionId: null, landSessionBranch: "" }),
+
+  openPullModal: (sessionId, baseBranch, behindCount) =>
+    set({ pullModalOpen: true, pullSessionId: sessionId, pullBaseBranch: baseBranch, pullBehindCount: behindCount }),
+  closePullModal: () =>
+    set({ pullModalOpen: false, pullSessionId: null }),
+
+  openCompleteModal: (sessionId, baseBranch, sessionBranch) =>
+    set({ completeModalOpen: true, completeSessionId: sessionId, completeBaseBranch: baseBranch, completeSessionBranch: sessionBranch }),
+  closeCompleteModal: () =>
+    set({ completeModalOpen: false, completeSessionId: null, completeSessionBranch: "" }),
 
   addToast: (message, type) => {
     const id = ++toastIdCounter;

@@ -82,7 +82,9 @@ export default function PrFormPane() {
         ? `${info.webUrl}/compare/${base}...${encodeURIComponent(session.branch)}?expand=1`
         : info.provider === "gitlab"
           ? `${info.webUrl}/-/merge_requests/new?merge_request[source_branch]=${encodeURIComponent(session.branch)}&merge_request[target_branch]=${encodeURIComponent(base)}`
-          : `${info.webUrl}/pull-requests/new?source=${encodeURIComponent(session.branch)}&dest=${encodeURIComponent(base)}`;
+          : info.provider === "azure"
+            ? `${info.webUrl}/pullrequestcreate?sourceRef=${encodeURIComponent(session.branch)}&targetRef=${encodeURIComponent(base)}`
+            : `${info.webUrl}/pull-requests/new?source=${encodeURIComponent(session.branch)}&dest=${encodeURIComponent(base)}`;
       window.volley.openExternal(url);
       addToast("Opened in browser", "info");
     } else {
@@ -95,7 +97,7 @@ export default function PrFormPane() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-3 p-4">
         <div className="text-gray-400 text-xs text-center">
-          No CLI tool detected (gh / glab).<br />
+          No CLI tool detected.<br />
           Create your PR in the browser instead.
         </div>
         <button

@@ -828,4 +828,21 @@ export function registerGitHandlers(getRepoRoot: () => string | null, getProvide
 
     return { ok: true, baseBranch };
   });
+
+  // ── git:push-base-branch ──────────────────────────────────────────────
+
+  ipcMain.handle("git:push-base-branch", (_event, { baseBranch }: { baseBranch: string }) => {
+    const repoRoot = getRepoRoot();
+    if (!repoRoot) return { ok: false, error: "No repo root" };
+    try {
+      execFileSync("git", ["push", "origin", baseBranch], {
+        cwd: repoRoot,
+        encoding: "utf-8",
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+      return { ok: true };
+    } catch (err: any) {
+      return { ok: false, error: err.message };
+    }
+  });
 }

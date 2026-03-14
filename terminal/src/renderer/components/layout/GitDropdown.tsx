@@ -28,17 +28,42 @@ const ICON_CHEVRON = (
   </svg>
 );
 
+const ICON_COMMIT = (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="12" r="4"/>
+    <path d="M12 2v6M12 16v6"/>
+  </svg>
+);
+
+const ICON_PUSH = (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 19V5M5 12l7-7 7 7"/>
+  </svg>
+);
+
+const ICON_PULL = (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 5v14M5 12l7 7 7-7"/>
+  </svg>
+);
+
+const ICON_CHECK = (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M20 6L9 17l-5-5"/>
+  </svg>
+);
+
 export default function GitDropdown({ sessionId }: GitDropdownProps) {
   const [open, setOpen] = useState(false);
-  const [conflictFiles, setConflictFiles] = useState<string[] | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const { status } = useSessionStatus(sessionId);
   const sessions = useSessionStore((s) => s.sessions);
   const session = sessions.get(sessionId);
   const addToast = useUiStore((s) => s.addToast);
   const openCommitModal = useUiStore((s) => s.openCommitModal);
+  const openPullModal = useUiStore((s) => s.openPullModal);
+  const openCompleteModal = useUiStore((s) => s.openCompleteModal);
   const bumpGitAction = useUiStore((s) => s.bumpGitAction);
-  const setRightPaneView = useUiStore((s) => s.setRightPaneView);
 
   const gitActionVersion = useUiStore((s) => s.gitActionVersion);
   const [lineStat, setLineStat] = useState<LineStat | null>(null);
@@ -93,88 +118,30 @@ export default function GitDropdown({ sessionId }: GitDropdownProps) {
     openCommitModal(sessionId, gitStatus.files.length);
   };
 
-  const handleCommitAndPush = async () => {
+  const handlePush = async () => {
     setOpen(false);
-    const gitStatus = await window.volley.git.status(sessionId);
-    if (gitStatus.error) {
-      addToast(gitStatus.error, "error");
-      return;
-    }
-    if (!gitStatus.dirty) {
-      // Nothing to commit — just push if there are unpushed commits
-      if (unpushed > 0) {
-        await doPush();
-      } else {
-        addToast("Nothing to commit or push", "info");
-      }
-      return;
-    }
-    // Open commit modal — after commit completes, push will happen via the modal's onCommitAndPush
-    openCommitModal(sessionId, gitStatus.files.length);
-  };
-
-  const doPush = async () => {
+    if (unpushed === 0) return;
     addToast("Pushing...", "info");
     const result = await window.volley.git.push(sessionId);
     if (result.ok) {
       bumpGitAction();
-      setRightPaneView("pr");
-      addToast("Pushed — create a PR", "success");
+      addToast("Pushed to origin", "success");
     } else {
       addToast(result.error || "Push failed", "error");
     }
   };
 
-  const handlePush = async () => {
+  const handlePull = () => {
     setOpen(false);
-    if (unpushed === 0 && uncommitted === 0) {
-      setRightPaneView("pr");
-      return;
-    }
-    await doPush();
+    openPullModal(sessionId, sourceBranch, behind);
   };
 
-  const handleSync = async () => {
+  const handleComplete = () => {
     setOpen(false);
-    addToast(`Syncing from ${sourceBranch}...`, "info");
-    const result = await window.volley.git.mergeSource(sessionId);
-    bumpGitAction();
-    if (result.ok) {
-      addToast(`Synced from ${sourceBranch}`, "success");
-    } else if (result.conflicts && result.conflicts.length > 0) {
-      addToast(`Merge conflicts in ${result.conflicts.length} file(s)`, "error");
-      setConflictFiles(result.conflicts);
-    } else if (result.error?.includes("would be overwritten")) {
-      addToast("Commit your changes before syncing — uncommitted files overlap with incoming changes", "error");
-    } else {
-      addToast(result.error || "Merge failed", "error");
-    }
+    openCompleteModal(sessionId, sourceBranch, session?.branch ?? "");
   };
 
-  const handleResolveWithAgent = () => {
-    if (!conflictFiles) return;
-    const files = conflictFiles.join(", ");
-    window.volley.agent.send(
-      sessionId,
-      `There are merge conflicts after syncing from ${sourceBranch}. Please resolve the conflicts in these files: ${files}\n\nResolve each conflict by choosing the correct code, then stage the resolved files with git add.`
-    );
-    setConflictFiles(null);
-    setRightPaneView("agent");
-  };
-
-  const handleCreatePr = () => {
-    setOpen(false);
-    setRightPaneView("pr");
-  };
-
-  const openLandModal = useUiStore((s) => s.openLandModal);
-
-  const handleLand = () => {
-    setOpen(false);
-    openLandModal(sessionId, sourceBranch, session?.branch ?? "");
-  };
-
-  const branchBadge = "text-[10px] font-mono text-emerald-400/80 bg-emerald-500/10 rounded px-1 py-px";
+  const badgeClass = "text-[10px] font-medium tabular-nums rounded-full px-1.5 py-px";
 
   const menuItemClass = (disabled: boolean) =>
     `flex items-center justify-between w-full px-2.5 py-1.5 text-[11px] text-left rounded transition-colors duration-75 ${
@@ -199,106 +166,66 @@ export default function GitDropdown({ sessionId }: GitDropdownProps) {
 
       {open && (
         <div className="absolute right-0 top-full mt-1 w-56 bg-vo-surface border border-white/[0.08] rounded-lg shadow-xl shadow-black/40 py-1 z-50">
+          {/* Commit */}
           <button
             className={menuItemClass(uncommitted === 0)}
             onClick={uncommitted > 0 ? handleCommit : undefined}
           >
             <span className="flex items-center gap-1.5">
+              <span className="text-gray-500">{ICON_COMMIT}</span>
               Commit
-              {uncommitted > 0 && lineStat && lineStat.files > 0 && (
-                <span className="flex items-center gap-1 text-[10px] tabular-nums">
-                  <span className="text-gray-500">{lineStat.files} {lineStat.files === 1 ? "file" : "files"}</span>
-                  <span className="text-green-400">+{lineStat.insertions}</span>
-                  <span className="text-red-400">-{lineStat.deletions}</span>
-                </span>
-              )}
-              {uncommitted > 0 && (!lineStat || lineStat.files === 0) && (
-                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
-              )}
             </span>
-            <span className="text-gray-600 text-[10px]">⌘⇧C</span>
+            {uncommitted > 0 && lineStat && lineStat.files > 0 && (
+              <span className={`${badgeClass} text-emerald-400 bg-emerald-500/15`}>
+                {lineStat.files} {lineStat.files === 1 ? "file" : "files"}
+              </span>
+            )}
           </button>
+
+          {/* Push */}
           <button
-            className={menuItemClass(uncommitted === 0 && unpushed === 0)}
-            onClick={uncommitted > 0 || unpushed > 0 ? handleCommitAndPush : undefined}
-          >
-            <span>Commit &amp; Push</span>
-            <span className="text-gray-600 text-[10px]" />
-          </button>
-          <button
-            className={menuItemClass(unpushed === 0 && uncommitted > 0)}
-            onClick={unpushed > 0 || uncommitted === 0 ? handlePush : undefined}
-          >
-            <span>Push</span>
-            <span className="text-gray-600 text-[10px]">⌘⇧P</span>
-          </button>
-          <div className="h-px bg-white/[0.06] my-1" />
-          <button
-            className={menuItemClass(false)}
-            onClick={handleSync}
+            className={menuItemClass(unpushed === 0)}
+            onClick={unpushed > 0 ? handlePush : undefined}
           >
             <span className="flex items-center gap-1.5">
-              Sync from <span className={branchBadge}>{sourceBranch}</span>
-              {behind > 0 && (
-                <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                  <span className="text-[9px] text-amber-400/90 bg-amber-500/15 rounded px-1 py-px">{behind} behind</span>
-                </>
-              )}
+              <span className="text-gray-500">{ICON_PUSH}</span>
+              Push
             </span>
+            {unpushed > 0 && (
+              <span className={`${badgeClass} text-emerald-400 bg-emerald-500/15`}>
+                {unpushed} ahead
+              </span>
+            )}
           </button>
+
+          {/* Pull */}
           <button
             className={menuItemClass(false)}
-            onClick={handleCreatePr}
+            onClick={handlePull}
           >
-            <span>Create PR</span>
-            <span className="text-gray-600 text-[10px]" />
+            <span className="flex items-center gap-1.5">
+              <span className="text-gray-500">{ICON_PULL}</span>
+              Pull
+            </span>
+            {behind > 0 && (
+              <span className={`${badgeClass} text-amber-400 bg-amber-500/15`}>
+                {behind} behind
+              </span>
+            )}
           </button>
+
+          <div className="h-px bg-white/[0.06] my-1" />
+
+          {/* Complete */}
           <button
-            className={menuItemClass(uncommitted > 0)}
-            onClick={uncommitted === 0 ? handleLand : undefined}
+            className={menuItemClass(false)}
+            onClick={handleComplete}
           >
-            <span className="flex items-center gap-1.5">Complete &amp; Merge to <span className={branchBadge}>{sourceBranch}</span></span>
-            <span className="text-gray-600 text-[10px]" />
+            <span className="flex items-center gap-1.5">
+              <span className="text-gray-500">{ICON_CHECK}</span>
+              Complete
+            </span>
           </button>
-        </div>
-      )}
-      {conflictFiles && (
-        <div
-          className="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setConflictFiles(null);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setConflictFiles(null);
-          }}
-        >
-          <div className="bg-vo-surface border border-vo-border rounded-lg shadow-2xl w-96 p-4">
-            <div className="text-xs text-gray-400 mb-1">Merge conflicts</div>
-            <div className="text-xs text-gray-500 mb-2">
-              {conflictFiles.length} file{conflictFiles.length !== 1 ? "s" : ""} with conflicts:
-            </div>
-            <div className="text-[10px] font-mono text-red-400/80 bg-red-500/10 rounded px-2 py-1.5 mb-3 max-h-32 overflow-y-auto">
-              {conflictFiles.map((f) => (
-                <div key={f}>{f}</div>
-              ))}
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                className="text-xs text-gray-500 hover:text-gray-300 px-2 py-1"
-                onClick={() => setConflictFiles(null)}
-              >
-                Resolve manually
-              </button>
-              <button
-                className="text-xs text-white bg-emerald-600 hover:bg-emerald-500 rounded px-3 py-1 font-medium"
-                onClick={handleResolveWithAgent}
-                autoFocus
-              >
-                Resolve with agent
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>

@@ -20,9 +20,10 @@ interface Attachment {
 interface Props {
   sessionId: string;
   disabled?: boolean;
+  visible?: boolean;
 }
 
-export default function TerminalPrompt({ sessionId, disabled = false }: Props) {
+export default function TerminalPrompt({ sessionId, disabled = false, visible = true }: Props) {
   const [value, setValue] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -44,10 +45,15 @@ export default function TerminalPrompt({ sessionId, disabled = false }: Props) {
     loadSkills().then(setSkills);
   }, []);
 
-  // Auto-focus when idle
+  // Auto-focus when idle and visible
   useEffect(() => {
-    if (!isBusy && !disabled) inputRef.current?.focus();
-  }, [isBusy, disabled]);
+    if (!isBusy && !disabled && visible) {
+      // Use requestAnimationFrame to ensure DOM is ready after visibility change
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
+    }
+  }, [isBusy, disabled, visible]);
 
   // Auto-resize textarea
   useEffect(() => {
