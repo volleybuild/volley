@@ -4,7 +4,7 @@ import type { SoundName } from "../../services/sound-service";
 import { playSound } from "../../services/sound-service";
 
 interface UserSettings {
-  ai?: { anthropicKey?: string; authMethod?: "apiKey" | "oauth" };
+  ai?: { anthropicKey?: string; authMethod?: "apiKey" | "oauth"; model?: string; customBaseUrl?: string };
 }
 
 interface ProjectConfig {
@@ -28,6 +28,8 @@ export default function SettingsView() {
   const [hasEnvKey, setHasEnvKey] = useState(false);
   const [testStatus, setTestStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [testError, setTestError] = useState("");
+  const [selectedModel, setSelectedModel] = useState("claude-sonnet-4-20250514");
+  const [customBaseUrl, setCustomBaseUrl] = useState("");
 
   // ── OAuth state ─────────────────────────────────────────────────────
   const [claudeInstalled, setClaudeInstalled] = useState<boolean | null>(null);
@@ -52,6 +54,8 @@ export default function SettingsView() {
     window.volley.settings.getUser().then((s: UserSettings) => {
       setApiKey(s.ai?.anthropicKey || "");
       if (s.ai?.authMethod) setAuthMethod(s.ai.authMethod);
+      if (s.ai?.model) setSelectedModel(s.ai.model);
+      setCustomBaseUrl(s.ai?.customBaseUrl || "");
     });
     window.volley.settings.checkEnvKey().then(({ hasEnvKey }) => {
       setHasEnvKey(hasEnvKey);
@@ -336,6 +340,45 @@ export default function SettingsView() {
               </p>
             </div>
           )}
+
+          {/* ── Default Model ──────────────────────────────────────── */}
+          <div className="space-y-2 pt-2 border-t border-vo-border">
+            <label className="text-xs text-gray-500">Default Model</label>
+            <select
+              className="w-full bg-vo-input border border-vo-border rounded px-3 py-2 text-[13px] text-gray-200 focus:outline-none focus:border-accent-bright/40 focus:ring-1 focus:ring-accent-bright/20 cursor-pointer"
+              value={selectedModel}
+              onChange={(e) => {
+                setSelectedModel(e.target.value);
+                window.volley.settings.setUser({ ai: { model: e.target.value } });
+              }}
+            >
+              <option value="claude-sonnet-4-20250514">Claude Sonnet 4 (Recommended)</option>
+              <option value="claude-opus-4-20250514">Claude Opus 4 (Most capable)</option>
+              <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (Fastest)</option>
+            </select>
+            <p className="text-[11px] text-gray-600 leading-relaxed">
+              The model used for agent sessions. Can also be changed per-session from the prompt area.
+            </p>
+          </div>
+
+          {/* ── Custom Base URL ────────────────────────────────────── */}
+          <div className="space-y-2">
+            <label className="text-xs text-gray-500">Custom API Base URL</label>
+            <input
+              type="text"
+              className="w-full bg-vo-input border border-vo-border rounded px-3 py-2 text-[13px] text-gray-200 font-mono placeholder-gray-600 focus:outline-none focus:border-accent-bright/40 focus:ring-1 focus:ring-accent-bright/20"
+              placeholder="https://api.anthropic.com (default)"
+              value={customBaseUrl}
+              onChange={(e) => {
+                setCustomBaseUrl(e.target.value);
+                window.volley.settings.setUser({ ai: { customBaseUrl: e.target.value || undefined } });
+              }}
+            />
+            <p className="text-[11px] text-gray-600 leading-relaxed">
+              Override the API endpoint for use with compatible providers (e.g. OpenRouter, AWS Bedrock proxy).
+              Leave empty to use the default Anthropic API.
+            </p>
+          </div>
         </section>
 
         {/* ── Sound Section ────────────────────────────────────────── */}

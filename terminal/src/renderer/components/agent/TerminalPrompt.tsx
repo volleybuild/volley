@@ -10,6 +10,7 @@ import {
 } from "../../skills/registry";
 import SkillSuggestions from "../shared/SkillSuggestions";
 import { HighlightedInputOverlay } from "../shared/HighlightedInput";
+import ModelSelector from "./ModelSelector";
 
 interface Attachment {
   base64: string;
@@ -307,16 +308,19 @@ export default function TerminalPrompt({ sessionId, disabled = false }: Props) {
             Configure API key in Settings to use the agent
           </div>
         ) : (
-          <div className="flex items-center gap-3 text-[11px] text-gray-600">
-            <span className="flex items-center gap-1">
-              <kbd className="text-gray-500 bg-white/[0.06] px-1.5 py-0.5 rounded text-[11px] leading-none border border-white/[0.06]">/</kbd> skills
-            </span>
-            <span className="flex items-center gap-1">
-              <kbd className="text-gray-500 bg-white/[0.06] px-1.5 py-0.5 rounded text-[11px] leading-none border border-white/[0.06]">⌘V</kbd> paste image
-            </span>
-            <span className="flex items-center gap-1">
-              <kbd className="text-gray-500 bg-white/[0.06] px-1.5 py-0.5 rounded text-[11px] leading-none border border-white/[0.06]">↵</kbd> send
-            </span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 text-[11px] text-gray-600">
+              <span className="flex items-center gap-1">
+                <kbd className="text-gray-500 bg-white/[0.06] px-1.5 py-0.5 rounded text-[11px] leading-none border border-white/[0.06]">/</kbd> skills
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="text-gray-500 bg-white/[0.06] px-1.5 py-0.5 rounded text-[11px] leading-none border border-white/[0.06]">⌘V</kbd> paste image
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="text-gray-500 bg-white/[0.06] px-1.5 py-0.5 rounded text-[11px] leading-none border border-white/[0.06]">↵</kbd> send
+              </span>
+            </div>
+            <ModelSelector disabled={disabled} />
           </div>
         )}
       </div>

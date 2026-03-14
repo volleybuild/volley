@@ -21,18 +21,21 @@ function getAgentState(sessionId: string): AgentSessionState {
   return state;
 }
 
-function getApiKey(): string | null {
-  // Check env first
-  if (process.env.ANTHROPIC_API_KEY) return process.env.ANTHROPIC_API_KEY;
-  // Read from user settings
+function getUserAiSettings(): { apiKey: string | null; model: string | null; customBaseUrl: string | null } {
+  const result = { apiKey: process.env.ANTHROPIC_API_KEY || null, model: null as string | null, customBaseUrl: null as string | null };
   try {
     const settingsPath = path.join(os.homedir(), ".volley", "settings.json");
     const raw = fs.readFileSync(settingsPath, "utf-8");
     const settings = JSON.parse(raw);
-    return settings.ai?.anthropicKey || null;
-  } catch {
-    return null;
-  }
+    if (!result.apiKey) result.apiKey = settings.ai?.anthropicKey || null;
+    result.model = settings.ai?.model || null;
+    result.customBaseUrl = settings.ai?.customBaseUrl || null;
+  } catch { /* ignore */ }
+  return result;
+}
+
+function getApiKey(): string | null {
+  return getUserAiSettings().apiKey;
 }
 
 function resolveWorktree(repoRoot: string, sessionId: string): string | null {
@@ -150,7 +153,7 @@ export function registerAgentHandlers(getRepoRoot: () => string | null, getMainW
   });
 
   // ── agent:send ─────────────────────────────────────────────────────────
-  ipcMain.on("agent:send", async (_event, { sessionId, prompt: initialPrompt, images }: { sessionId: string; prompt: string; images?: { base64: string; mediaType: string }[] }) => {
+  ipcMain.on("agent:send", async (_event, { sessionId, prompt: initialPrompt, images, model: modelOverride }: { sessionId: string; prompt: string; images?: { base64: string; mediaType: string }[]; model?: string }) => {
     let prompt = initialPrompt;
     const mainWindow = getMainWindow();
     if (!mainWindow) return;
@@ -161,7 +164,8 @@ export function registerAgentHandlers(getRepoRoot: () => string | null, getMainW
       return;
     }
 
-    const apiKey = getApiKey();
+    const aiSettings = getUserAiSettings();
+    const apiKey = aiSettings.apiKey;
 
     const worktree = resolveWorktree(repoRoot, sessionId);
     if (!worktree) {
@@ -212,6 +216,13 @@ export function registerAgentHandlers(getRepoRoot: () => string | null, getMainW
       if (apiKey) {
         env.ANTHROPIC_API_KEY = apiKey;
       }
+      // Support custom base URL for third-party providers (OpenRouter, etc.)
+      const customBaseUrl = aiSettings.customBaseUrl;
+      if (customBaseUrl) {
+        env.ANTHROPIC_BASE_URL = customBaseUrl;
+      }
+
+      const selectedModel = modelOverride || aiSettings.model;
 
       const options: Record<string, any> = {
         cwd: worktree,
@@ -220,6 +231,10 @@ export function registerAgentHandlers(getRepoRoot: () => string | null, getMainW
         includePartialMessages: true,
         env,
       };
+
+      if (selectedModel) {
+        options.model = selectedModel;
+      }
 
       if (agentState.agentSessionId) {
         options.resume = agentState.agentSessionId;

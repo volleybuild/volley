@@ -1,6 +1,8 @@
 interface UserSettings {
   ai?: {
     anthropicKey?: string;
+    model?: string;
+    customBaseUrl?: string;
   };
 }
 
@@ -146,7 +148,7 @@ interface VolleyApi {
     claudeLogin(): Promise<{ ok: boolean; error?: string }>;
   };
   agent: {
-    send(sessionId: string, prompt: string, images?: { base64: string; mediaType: string }[]): void;
+    send(sessionId: string, prompt: string, images?: { base64: string; mediaType: string }[], model?: string): void;
     saveImage(sessionId: string, base64: string, mediaType: string): Promise<{ path: string | null; error?: string }>;
     interrupt(sessionId: string): void;
     history(sessionId: string): Promise<any[]>;

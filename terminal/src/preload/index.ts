@@ -222,8 +222,8 @@ contextBridge.exposeInMainWorld("volley", {
     },
   },
   agent: {
-    send(sessionId: string, prompt: string, images?: { base64: string; mediaType: string }[]): void {
-      ipcRenderer.send("agent:send", { sessionId, prompt, images });
+    send(sessionId: string, prompt: string, images?: { base64: string; mediaType: string }[], model?: string): void {
+      ipcRenderer.send("agent:send", { sessionId, prompt, images, model });
     },
     saveImage(sessionId: string, base64: string, mediaType: string): Promise<{ path: string | null; error?: string }> {
       return ipcRenderer.invoke("agent:save-image", { sessionId, base64, mediaType });
