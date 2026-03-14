@@ -340,4 +340,34 @@ contextBridge.exposeInMainWorld("volley", {
   openExternal(url: string): void {
     ipcRenderer.send("shell:openExternal", { url });
   },
+  app: {
+    getVersion(): Promise<{ version: string }> {
+      return ipcRenderer.invoke("app:get-version");
+    },
+    checkForUpdates(force?: boolean): Promise<{
+      hasUpdate: boolean;
+      currentVersion: string;
+      latestVersion: string;
+      releaseUrl: string;
+      downloadUrl: string | null;
+      releaseNotes: string | null;
+    }> {
+      return ipcRenderer.invoke("app:check-for-updates", { force });
+    },
+    downloadUpdate(downloadUrl: string): Promise<{ ok: boolean; path?: string; error?: string }> {
+      return ipcRenderer.invoke("app:download-update", { downloadUrl });
+    },
+    openUpdate(filePath: string): Promise<{ ok: boolean; error?: string }> {
+      return ipcRenderer.invoke("app:open-update", { filePath });
+    },
+    cancelDownload(): void {
+      ipcRenderer.send("app:cancel-download");
+    },
+    onDownloadProgress(callback: (progress: { percent: number; transferred: number; total: number }) => void): void {
+      ipcRenderer.on("app:download-progress", (_event, progress) => callback(progress));
+    },
+    onDownloadComplete(callback: (payload: { path: string }) => void): void {
+      ipcRenderer.on("app:download-complete", (_event, payload) => callback(payload));
+    },
+  },
 });

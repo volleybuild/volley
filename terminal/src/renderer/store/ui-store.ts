@@ -55,6 +55,13 @@ interface UiStore {
   sidebarSearch: string;
   appReady: boolean;
 
+  // Update state
+  updateInfo: UpdateCheckResult | null;
+  updateDismissed: boolean;
+  updateDownloading: boolean;
+  updateDownloadProgress: number;
+  updateDownloadedPath: string | null;
+
   setTheme: (theme: ThemeName) => void;
   loadTheme: () => void;
   setAppReady: () => void;
@@ -92,6 +99,13 @@ interface UiStore {
   toggleSound: () => void;
   toggleSoundEvent: (event: SoundName) => void;
   loadSoundSettings: () => void;
+
+  // Update actions
+  setUpdateInfo: (info: UpdateCheckResult | null) => void;
+  dismissUpdate: () => void;
+  setUpdateDownloading: (downloading: boolean) => void;
+  setUpdateDownloadProgress: (percent: number) => void;
+  setUpdateDownloadedPath: (path: string | null) => void;
 }
 
 function createUiStore() {
@@ -139,6 +153,13 @@ function createUiStore() {
   sidebarSearch: "",
   appReady: false,
   rightPaneWidth: 450,
+
+  // Update state defaults
+  updateInfo: null,
+  updateDismissed: false,
+  updateDownloading: false,
+  updateDownloadProgress: 0,
+  updateDownloadedPath: null,
   sidebarWidth: 260,
   sidebarSections: {
     notes: true,
@@ -257,6 +278,13 @@ function createUiStore() {
       }
     });
   },
+
+  // Update actions
+  setUpdateInfo: (info) => set({ updateInfo: info, updateDismissed: false }),
+  dismissUpdate: () => set({ updateDismissed: true }),
+  setUpdateDownloading: (downloading) => set({ updateDownloading: downloading }),
+  setUpdateDownloadProgress: (percent) => set({ updateDownloadProgress: percent }),
+  setUpdateDownloadedPath: (path) => set({ updateDownloadedPath: path, updateDownloading: false }),
 }));
 }
 

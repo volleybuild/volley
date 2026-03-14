@@ -24,6 +24,14 @@ import {
 } from "./project-manager";
 import type { ProviderName } from "./git-provider";
 import { log, logError, getLogFilePath } from "./logger";
+import {
+  checkForUpdates,
+  setupDownloadListeners,
+  downloadUpdate,
+  cancelDownload,
+  installUpdate,
+  getAppVersion,
+} from "./update-checker";
 
 // ── Module-level state ────────────────────────────────────────────────────
 
@@ -671,6 +679,40 @@ app.whenReady().then(() => {
     } catch {
       return { command: null };
     }
+  });
+
+  // ── Update handlers ─────────────────────────────────────────────────────
+
+  ipcMain.handle("app:get-version", () => {
+    return { version: getAppVersion() };
+  });
+
+  ipcMain.handle("app:check-for-updates", async (_event, { force }: { force?: boolean } = {}) => {
+    return checkForUpdates(force);
+  });
+
+  ipcMain.handle("app:download-update", async (_event, { downloadUrl: _downloadUrl }: { downloadUrl: string }) => {
+    setupDownloadListeners(
+      (progress) => {
+        mainWindow?.webContents.send("app:download-progress", progress);
+      },
+      () => {
+        mainWindow?.webContents.send("app:download-complete", { path: "__electron_updater__" });
+      },
+      (error) => {
+        mainWindow?.webContents.send("app:download-error", { error });
+      },
+    );
+
+    return downloadUpdate();
+  });
+
+  ipcMain.handle("app:open-update", async (_event, { filePath: _filePath }: { filePath: string }) => {
+    return installUpdate();
+  });
+
+  ipcMain.on("app:cancel-download", () => {
+    cancelDownload();
   });
 
   // ── Run terminal handlers ─────────────────────────────────────────────

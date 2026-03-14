@@ -50,6 +50,18 @@ export default function SettingsView() {
   const [projectConfig, setProjectConfig] = useState<ProjectConfig>({});
   const [projectDirty, setProjectDirty] = useState(false);
 
+  // ── Update state ─────────────────────────────────────────────────────
+  const [currentVersion, setCurrentVersion] = useState<string>("");
+  const [checkingUpdates, setCheckingUpdates] = useState(false);
+  const updateInfo = useUiStore((s) => s.updateInfo);
+  const setUpdateInfo = useUiStore((s) => s.setUpdateInfo);
+  const updateDownloading = useUiStore((s) => s.updateDownloading);
+  const updateDownloadProgress = useUiStore((s) => s.updateDownloadProgress);
+  const updateDownloadedPath = useUiStore((s) => s.updateDownloadedPath);
+  const setUpdateDownloading = useUiStore((s) => s.setUpdateDownloading);
+  const setUpdateDownloadProgress = useUiStore((s) => s.setUpdateDownloadProgress);
+  const addToast = useUiStore((s) => s.addToast);
+
   // Load on mount
   useEffect(() => {
     window.volley.settings.getUser().then((s: UserSettings) => {
@@ -78,6 +90,9 @@ export default function SettingsView() {
         setContextExists(true);
         setContextUpdatedAt(new Date().toISOString());
       }
+    });
+    window.volley.app.getVersion().then(({ version }) => {
+      setCurrentVersion(version);
     });
   }, []);
 
@@ -125,6 +140,23 @@ export default function SettingsView() {
     const result = await window.volley.planning.analyzeProject();
     if (!result.ok && result.error !== "Aborted") {
       // Status update will come from IPC event, but handle immediate errors
+    }
+  };
+
+  const handleCheckForUpdates = async () => {
+    setCheckingUpdates(true);
+    try {
+      const result = await window.volley.app.checkForUpdates(true); // force refresh
+      if (result.hasUpdate) {
+        setUpdateInfo(result);
+        addToast(`Update available: v${result.latestVersion}`, "info");
+      } else {
+        addToast("You're on the latest version!", "success");
+      }
+    } catch (err) {
+      addToast("Failed to check for updates", "error");
+    } finally {
+      setCheckingUpdates(false);
     }
   };
 
@@ -594,6 +626,103 @@ export default function SettingsView() {
                 </button>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* ── About Section ────────────────────────────────────────────── */}
+        <section className="bg-vo-surface rounded-lg border border-vo-border p-5 space-y-4">
+          <h2 className="text-[13px] font-medium text-gray-300 uppercase tracking-wider">About</h2>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-400">
+                  Version {currentVersion || "..."}
+                </p>
+                {updateInfo?.hasUpdate && (
+                  <p className="text-[11px] text-accent-bright mt-0.5">
+                    v{updateInfo.latestVersion} available
+                  </p>
+                )}
+              </div>
+              <button
+                className={`px-3 py-1.5 rounded text-xs font-medium cursor-pointer transition-colors border ${
+                  checkingUpdates
+                    ? "bg-accent-bright/10 border-accent-bright/30 text-accent-bright animate-pulse"
+                    : updateInfo?.hasUpdate
+                      ? "bg-accent-bright/10 border-accent-bright/30 text-accent-bright"
+                      : "bg-vo-input border-vo-border text-gray-400 hover:text-gray-200 hover:border-gray-500"
+                }`}
+                onClick={handleCheckForUpdates}
+                disabled={checkingUpdates}
+              >
+                {checkingUpdates ? "Checking..." : updateInfo?.hasUpdate ? "Update Available" : "Check for Updates"}
+              </button>
+            </div>
+
+            {updateInfo?.hasUpdate && updateInfo.downloadUrl && (
+              <>
+                {updateDownloading && (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[11px] text-gray-500">
+                      <span>Downloading...</span>
+                      <span>{updateDownloadProgress}%</span>
+                    </div>
+                    <div className="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-accent-bright transition-all duration-300 rounded-full"
+                        style={{ width: `${updateDownloadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {updateDownloadedPath ? (
+                  <button
+                    className="w-full px-3 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all text-[#0a0a0c] bg-gradient-to-b from-[#6ee7b7] to-[#34d399] hover:from-[#7eedc4] hover:to-[#3ddda3] shadow-[0_1px_2px_rgba(0,0,0,0.3),0_0_20px_-5px_rgba(110,231,183,0.4)]"
+                    onClick={async () => {
+                      const result = await window.volley.app.openUpdate(updateDownloadedPath);
+                      if (!result.ok) {
+                        addToast(result.error || "Failed to install update", "error");
+                      }
+                    }}
+                  >
+                    Install & Restart
+                  </button>
+                ) : !updateDownloading ? (
+                  <button
+                    className="w-full px-3 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all text-[#0a0a0c] bg-gradient-to-b from-[#6ee7b7] to-[#34d399] hover:from-[#7eedc4] hover:to-[#3ddda3] shadow-[0_1px_2px_rgba(0,0,0,0.3),0_0_20px_-5px_rgba(110,231,183,0.4)]"
+                    onClick={async () => {
+                      setUpdateDownloading(true);
+                      setUpdateDownloadProgress(0);
+                      const result = await window.volley.app.downloadUpdate(updateInfo.downloadUrl!);
+                      if (!result.ok) {
+                        setUpdateDownloading(false);
+                        addToast(result.error || "Download failed", "error");
+                      }
+                    }}
+                  >
+                    Download v{updateInfo.latestVersion}
+                  </button>
+                ) : null}
+              </>
+            )}
+
+            <p className="text-[11px] text-gray-600 leading-relaxed">
+              <button
+                className="text-accent-bright/70 hover:text-accent-bright underline underline-offset-2 cursor-pointer"
+                onClick={() => window.volley.openExternal("https://github.com/volleybuild/volley/releases")}
+              >
+                View all releases
+              </button>
+              {" "}&bull;{" "}
+              <button
+                className="text-accent-bright/70 hover:text-accent-bright underline underline-offset-2 cursor-pointer"
+                onClick={() => window.volley.openExternal("https://github.com/volleybuild/volley")}
+              >
+                GitHub
+              </button>
+            </p>
           </div>
         </section>
 

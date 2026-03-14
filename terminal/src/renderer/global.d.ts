@@ -1,3 +1,18 @@
+interface UpdateCheckResult {
+  hasUpdate: boolean;
+  currentVersion: string;
+  latestVersion: string;
+  releaseUrl: string;
+  downloadUrl: string | null;
+  releaseNotes: string | null;
+}
+
+interface DownloadProgress {
+  percent: number;
+  transferred: number;
+  total: number;
+}
+
 interface UserSettings {
   ai?: {
     anthropicKey?: string;
@@ -187,6 +202,15 @@ interface VolleyApi {
     folderDelete(id: string): Promise<{ ok: boolean; error?: string }>;
     folderReorder(ids: string[]): Promise<{ ok: boolean; error?: string }>;
     moveToFolder(noteId: string, folderId: string | null): Promise<{ ok: boolean; error?: string }>;
+  };
+  app: {
+    getVersion(): Promise<{ version: string }>;
+    checkForUpdates(force?: boolean): Promise<UpdateCheckResult>;
+    downloadUpdate(downloadUrl: string): Promise<{ ok: boolean; path?: string; error?: string }>;
+    openUpdate(filePath: string): Promise<{ ok: boolean; error?: string }>;
+    cancelDownload(): void;
+    onDownloadProgress(callback: (progress: DownloadProgress) => void): void;
+    onDownloadComplete(callback: (payload: { path: string }) => void): void;
   };
   openExternal(url: string): void;
   ready(): void;

@@ -24,6 +24,7 @@ import NoteEditor from "./components/notes/NoteEditor";
 import { useProjectStore } from "./store/project-store";
 import { useNoteStore } from "./store/note-store";
 import SplashScreen from "./components/layout/SplashScreen";
+import UpdateBanner from "./components/shared/UpdateBanner";
 
 export default function App() {
   const sessions = useSessionStore((s) => s.sessions);
@@ -43,6 +44,23 @@ export default function App() {
     useUiStore.getState().loadTheme();
     useProjectStore.getState().fetchProjects();
     window.volley.ready();
+  }, []);
+
+  // Check for updates after app is ready (3 second delay to not block startup)
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      try {
+        const result = await window.volley.app.checkForUpdates();
+        if (result.hasUpdate) {
+          console.log("[renderer] update available:", result.latestVersion);
+          useUiStore.getState().setUpdateInfo(result);
+        }
+      } catch (err) {
+        console.error("[renderer] update check failed:", err);
+      }
+    }, 3000);
+
+    return () => clearTimeout(timer);
   }, []);
 
   // Sync file tree base path when active session changes
@@ -87,6 +105,7 @@ export default function App() {
       <SwitchProjectModal />
       <ToastContainer />
       <SplashScreen />
+      <UpdateBanner />
     </div>
   );
 }
