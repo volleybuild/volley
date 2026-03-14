@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useUiStore } from "../../store/ui-store";
 import type { SoundName } from "../../services/sound-service";
 import { playSound } from "../../services/sound-service";
+import { themes, themeNames, type ThemeName } from "../../constants/themes";
 
 interface UserSettings {
   ai?: { anthropicKey?: string; authMethod?: "apiKey" | "oauth" };
@@ -16,6 +17,8 @@ interface ProjectConfig {
 
 export default function SettingsView() {
   const closeSettings = useUiStore((s) => s.closeSettings);
+  const currentTheme = useUiStore((s) => s.theme);
+  const setTheme = useUiStore((s) => s.setTheme);
   const soundEnabled = useUiStore((s) => s.soundEnabled);
   const soundSettings = useUiStore((s) => s.soundSettings);
   const toggleSound = useUiStore((s) => s.toggleSound);
@@ -175,6 +178,50 @@ export default function SettingsView() {
           </button>
           <h1 className="text-[15px] font-medium text-gray-200">Settings</h1>
         </div>
+
+        {/* ── Appearance Section ──────────────────────────────────────── */}
+        <section className="bg-vo-surface rounded-lg border border-vo-border p-5 space-y-4">
+          <h2 className="text-[13px] font-medium text-gray-300 uppercase tracking-wider">Appearance</h2>
+          <div className="grid grid-cols-4 gap-3">
+            {themeNames.map((name) => {
+              const theme = themes[name];
+              const isActive = currentTheme === name;
+              return (
+                <button
+                  key={name}
+                  className={`flex flex-col items-center gap-2.5 p-3 rounded-lg border cursor-pointer transition-all ${
+                    isActive
+                      ? "border-accent-bright bg-accent-bright/[0.06]"
+                      : "border-vo-border hover:border-gray-500 bg-vo-base"
+                  }`}
+                  onClick={() => setTheme(name)}
+                >
+                  {/* Color preview swatch */}
+                  <div
+                    className="w-full h-10 rounded flex items-center justify-center gap-1.5 border border-black/10"
+                    style={{ background: theme.colors["vo-base"] }}
+                  >
+                    <span
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ background: theme.colors["accent-bright"] }}
+                    />
+                    <span
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ background: theme.colors["status-idle"] }}
+                    />
+                    <span
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ background: theme.colors["accent-purple"] }}
+                    />
+                  </div>
+                  <span className={`text-xs font-medium ${isActive ? "text-accent-bright" : "text-gray-400"}`}>
+                    {theme.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
         {/* ── AI Section ─────────────────────────────────────────────── */}
         <section className="bg-vo-surface rounded-lg border border-vo-border p-5 space-y-4">

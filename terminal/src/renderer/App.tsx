@@ -37,9 +37,10 @@ export default function App() {
   useKeyboardShortcuts();
   useElapsedTick();
 
-  // Signal ready to main process and fetch projects
+  // Signal ready to main process, fetch projects, and load theme
   useEffect(() => {
     console.log("[renderer] signaling ready");
+    useUiStore.getState().loadTheme();
     useProjectStore.getState().fetchProjects();
     window.volley.ready();
   }, []);

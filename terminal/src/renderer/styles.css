@@ -11,12 +11,12 @@
   kbd {
     display: inline-block;
     background: rgba(255, 255, 255, 0.06);
-    border: 1px solid #2a3140;
+    border: 1px solid var(--kbd-border);
     border-radius: 4px;
     padding: 1px 6px;
     font-family: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
     font-size: 11px;
-    color: #8b919e;
+    color: var(--kbd-text);
     line-height: 18px;
   }
 }
@@ -37,11 +37,11 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a3140;
+  background: var(--scrollbar-thumb);
   border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #34d399;
+  background: var(--scrollbar-hover);
 }
 
 /* Terminal padding — descendant selector into xterm internals */
@@ -54,16 +54,16 @@
   animation: pulse-pending 1.2s ease-in-out infinite;
 }
 @keyframes pulse-pending {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(110, 231, 183, 0.4); }
-  50% { opacity: 0.6; box-shadow: 0 0 6px 2px rgba(110, 231, 183, 0.3); }
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgb(var(--status-running) / 0.4); }
+  50% { opacity: 0.6; box-shadow: 0 0 6px 2px rgb(var(--status-running) / 0.3); }
 }
 
 .animate-status-running {
   animation: pulse-running 2s ease-in-out infinite;
 }
 @keyframes pulse-running {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(110, 231, 183, 0.5); }
-  50% { box-shadow: 0 0 4px 2px rgba(110, 231, 183, 0.3); }
+  0%, 100% { box-shadow: 0 0 0 0 rgb(var(--status-running) / 0.5); }
+  50% { box-shadow: 0 0 4px 2px rgb(var(--status-running) / 0.3); }
 }
 
 .animate-status-idle {
@@ -78,7 +78,7 @@
   animation: flash-exit 0.6s ease-out;
 }
 @keyframes flash-exit {
-  0% { box-shadow: 0 0 8px 4px rgba(239, 68, 68, 0.6); }
+  0% { box-shadow: 0 0 8px 4px rgb(var(--status-error) / 0.6); }
   100% { box-shadow: none; }
 }
 
@@ -96,8 +96,8 @@
   animation: pulse-waiting 1.5s ease-in-out infinite;
 }
 @keyframes pulse-waiting {
-  0%, 100% { opacity: 1; box-shadow: 0 0 4px 1px rgba(251, 191, 36, 0.4); }
-  50% { opacity: 0.7; box-shadow: 0 0 8px 3px rgba(251, 191, 36, 0.2); }
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px 1px rgb(var(--status-idle) / 0.4); }
+  50% { opacity: 0.7; box-shadow: 0 0 8px 3px rgb(var(--status-idle) / 0.2); }
 }
 
 /* ── Grid mode specific ────────────────────────────────────────── */
@@ -127,7 +127,7 @@
   font-size: 12px;
   line-height: 1.4;
   counter-reset: line;
-  background: #09090b;
+  background: var(--hljs-bg);
 }
 
 .file-viewer-pre code {
@@ -146,14 +146,14 @@
   width: 3.5em;
   padding-right: 1em;
   text-align: right;
-  color: #505664;
+  color: var(--line-number);
   user-select: none;
   font-variant-numeric: tabular-nums;
 }
 
 /* Override hljs background to match app */
 .hljs {
-  background: #09090b !important;
+  background: var(--hljs-bg) !important;
 }
 
 /* ── Diff viewer (diff2html dark theme overrides) ─────────────── */
@@ -185,7 +185,7 @@
 .diff-viewer .d2h-code-linenumber {
   position: static !important;
   background: transparent;
-  color: #52525b;
+  color: var(--diff-linenumber);
   border-right: 1px solid rgba(255, 255, 255, 0.06);
   padding: 0 8px;
   text-align: right;
@@ -196,7 +196,7 @@
 .diff-viewer .d2h-code-side-line {
   position: static !important;
   background: transparent;
-  color: #a1a1aa;
+  color: var(--diff-code-text);
   padding: 0 0 0 12px;
 }
 .diff-viewer .d2h-code-line-prefix {
@@ -210,34 +210,34 @@
 }
 /* Insertions */
 .diff-viewer .d2h-ins {
-  background: rgba(110, 231, 183, 0.08);
+  background: var(--diff-ins-bg);
 }
 .diff-viewer .d2h-ins .d2h-code-line-prefix,
 .diff-viewer .d2h-ins .d2h-code-line-ctn {
-  color: #6ee7b7;
+  color: var(--diff-ins-text);
 }
 /* Inline word-level insertion highlight */
 .diff-viewer .d2h-ins .d2h-change {
-  background: rgba(110, 231, 183, 0.18);
+  background: var(--diff-ins-highlight);
   border-radius: 2px;
 }
 /* Deletions */
 .diff-viewer .d2h-del {
-  background: rgba(248, 113, 113, 0.08);
+  background: var(--diff-del-bg);
 }
 .diff-viewer .d2h-del .d2h-code-line-prefix,
 .diff-viewer .d2h-del .d2h-code-line-ctn {
-  color: #f87171;
+  color: var(--diff-del-text);
 }
 /* Inline word-level deletion highlight */
 .diff-viewer .d2h-del .d2h-change {
-  background: rgba(248, 113, 113, 0.18);
+  background: var(--diff-del-highlight);
   border-radius: 2px;
 }
 /* Info/hunk headers */
 .diff-viewer .d2h-info {
-  background: rgba(96, 165, 250, 0.05);
-  color: #60a5fa;
+  background: var(--diff-info-bg);
+  color: var(--diff-info-text);
   border: none;
   padding: 6px 12px;
   font-size: 11px;
