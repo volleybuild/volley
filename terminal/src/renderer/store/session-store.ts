@@ -3,7 +3,8 @@ import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebglAddon } from "@xterm/addon-webgl";
 import type { SessionState, SessionLifecycle, TodoType } from "./types";
-import { volleyTheme } from "../constants/theme";
+import { getTerminalTheme } from "../constants/themes";
+import { useUiStore } from "./ui-store";
 import { playSound } from "../services/sound-service";
 
 interface SessionStore {
@@ -44,6 +45,7 @@ interface SessionStore {
   deleteTodoFolder: (id: string) => Promise<void>;
   reorderTodoFolders: (orderedIds: string[]) => void;
   moveSessionToFolder: (sessionId: string, folderId: string | null) => Promise<void>;
+  updateAllTerminalThemes: () => void;
 }
 
 function createSessionStore() {
@@ -84,7 +86,7 @@ function createSessionStore() {
 
     if (!isTodo && !isPaused) {
       terminal = new Terminal({
-        theme: volleyTheme,
+        theme: getTerminalTheme(useUiStore.getState().theme),
         fontFamily: "'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, monospace",
         fontSize: 12,
         lineHeight: 1.2,
@@ -342,7 +344,7 @@ function createSessionStore() {
     session.runTerminal?.dispose();
 
     const runTerminal = new Terminal({
-      theme: volleyTheme,
+      theme: getTerminalTheme(useUiStore.getState().theme),
       fontFamily: "'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, monospace",
       fontSize: 12,
       lineHeight: 1.2,
@@ -516,7 +518,7 @@ function createSessionStore() {
 
     // Create new xterm terminal
     const terminal = new Terminal({
-      theme: volleyTheme,
+      theme: getTerminalTheme(useUiStore.getState().theme),
       fontFamily: "'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, monospace",
       fontSize: 12,
       lineHeight: 1.2,
@@ -629,6 +631,19 @@ function createSessionStore() {
         }
         return { sessions: next };
       });
+    }
+  },
+
+  updateAllTerminalThemes: () => {
+    const theme = getTerminalTheme(useUiStore.getState().theme);
+    const sessions = get().sessions;
+    for (const session of sessions.values()) {
+      if (session.terminal) {
+        session.terminal.options.theme = theme;
+      }
+      if (session.runTerminal) {
+        session.runTerminal.options.theme = theme;
+      }
     }
   },
 }));

@@ -220,6 +220,9 @@ contextBridge.exposeInMainWorld("volley", {
     claudeLogin(): Promise<{ ok: boolean; error?: string }> {
       return ipcRenderer.invoke("settings:claude-login");
     },
+    setIcon(variant: "dark" | "light"): Promise<void> {
+      return ipcRenderer.invoke("settings:set-icon", { variant });
+    },
   },
   agent: {
     send(sessionId: string, prompt: string, images?: { base64: string; mediaType: string }[]): void {

@@ -1,6 +1,6 @@
 .note-editor-container .tiptap {
   outline: none;
-  color: #d1d5db;
+  color: var(--note-body);
   font-size: 14px;
   line-height: 1.7;
   min-height: 200px;
@@ -9,21 +9,21 @@
 .note-editor-container .tiptap h1 {
   font-size: 1.75em;
   font-weight: 700;
-  color: #f3f4f6;
+  color: var(--note-h1);
   margin: 0.5em 0 0.3em;
 }
 
 .note-editor-container .tiptap h2 {
   font-size: 1.35em;
   font-weight: 600;
-  color: #e5e7eb;
+  color: var(--note-h2);
   margin: 0.5em 0 0.3em;
 }
 
 .note-editor-container .tiptap h3 {
   font-size: 1.1em;
   font-weight: 600;
-  color: #d1d5db;
+  color: var(--note-h3);
   margin: 0.5em 0 0.3em;
 }
 
@@ -44,10 +44,10 @@
 }
 
 .note-editor-container .tiptap blockquote {
-  border-left: 3px solid rgba(110, 231, 183, 0.3);
+  border-left: 3px solid var(--note-blockquote-border);
   padding-left: 1em;
   margin: 0.5em 0;
-  color: #9ca3af;
+  color: var(--note-muted);
 }
 
 .note-editor-container .tiptap code {
@@ -75,7 +75,7 @@
 .note-editor-container .tiptap p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
-  color: #4b5563;
+  color: var(--note-placeholder);
   pointer-events: none;
   height: 0;
 }

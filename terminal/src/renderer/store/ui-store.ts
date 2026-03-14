@@ -1,12 +1,15 @@
 import { create } from "zustand";
 import type { Toast } from "./types";
 import type { SoundName } from "../services/sound-service";
+import type { ThemeName } from "../constants/themes";
+import { applyThemeToDOM, themes } from "../constants/themes";
 
 let toastIdCounter = 0;
 
 export type SoundSettings = Record<SoundName, boolean>;
 
 interface UiStore {
+  theme: ThemeName;
   soundEnabled: boolean;
   soundSettings: SoundSettings;
   fileTreeBasePath: string;
@@ -52,6 +55,8 @@ interface UiStore {
   sidebarSearch: string;
   appReady: boolean;
 
+  setTheme: (theme: ThemeName) => void;
+  loadTheme: () => void;
   setAppReady: () => void;
   setFileTreeBasePath: (basePath: string) => void;
   toggleSidebarSection: (section: "notes" | "archivedNotes" | "todo" | "inProgress" | "completed") => void;
@@ -91,6 +96,7 @@ interface UiStore {
 
 function createUiStore() {
   return create<UiStore>((set, get) => ({
+  theme: "dark" as ThemeName,
   soundEnabled: true,
   soundSettings: {
     sessionStarted: true,
@@ -142,6 +148,28 @@ function createUiStore() {
     completed: false,
   },
 
+  setTheme: (theme: ThemeName) => {
+    set({ theme });
+    applyThemeToDOM(theme);
+    window.volley.settings.setUser({ theme });
+    window.volley.settings.setIcon(themes[theme].iconVariant);
+    // Dynamically import to avoid circular dependency
+    import("./session-store").then(({ useSessionStore }) => {
+      useSessionStore.getState().updateAllTerminalThemes();
+    });
+  },
+  loadTheme: () => {
+    // Apply dark theme immediately to avoid flash
+    applyThemeToDOM("dark");
+    window.volley.settings.getUser().then((s: any) => {
+      const theme = s.theme as ThemeName | undefined;
+      if (theme && ["dark", "light", "monokai", "mono"].includes(theme)) {
+        set({ theme });
+        applyThemeToDOM(theme);
+        window.volley.settings.setIcon(themes[theme].iconVariant);
+      }
+    });
+  },
   setAppReady: () => set({ appReady: true }),
   setFileTreeBasePath: (basePath) => set({ fileTreeBasePath: basePath }),
   toggleSidebarSection: (section) =>

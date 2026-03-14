@@ -1,4 +1,4 @@
-import { ipcMain } from "electron";
+import { ipcMain, BrowserWindow, nativeImage, app } from "electron";
 import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -135,6 +135,19 @@ export function registerSettingsHandlers(getRepoRoot: () => string | null): void
   // This handler is kept as a no-op — the UI directs users to run it manually.
   ipcMain.handle("settings:claude-login", () => {
     return { ok: false, error: "Please run 'claude login' in your terminal" };
+  });
+
+  // ── settings:set-icon ───────────────────────────────────────────────────
+  ipcMain.handle("settings:set-icon", (_event, { variant }: { variant: "dark" | "light" }) => {
+    const iconName = variant === "light" ? "icon-light.png" : "icon.png";
+    const iconPath = path.join(__dirname, "..", "..", "resources", iconName);
+    if (!fs.existsSync(iconPath)) return;
+    const icon = nativeImage.createFromPath(iconPath);
+    const win = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
+    if (win) win.setIcon(icon);
+    if (process.platform === "darwin") {
+      app.dock.setIcon(icon);
+    }
   });
 }
 
